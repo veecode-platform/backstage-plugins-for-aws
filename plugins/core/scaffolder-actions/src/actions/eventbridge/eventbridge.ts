@@ -12,6 +12,7 @@
  */
 
 import { createTemplateAction } from '@backstage/plugin-scaffolder-node';
+import { z } from 'zod';
 import {
   EventBridgeClient,
   PutEventsCommand,
@@ -28,35 +29,31 @@ export const createAwsEventBridgeEventAction = (options: {
     description:
       'Posts an AWS EventBridge event matching the provided details.',
     schema: {
-      input: {
-        accountId: z =>
-          z
-            .string({
-              description: 'The AWS account ID to create the resource.',
-            })
-            .optional(),
-        region: z =>
-          z
-            .string({ description: 'The AWS region to create the resource.' })
-            .optional(),
-        source: z => z.string({ description: 'The source of the event.' }),
-        detail: z =>
-          z
-            .string({ description: 'A valid JSON object as a string.' })
-            .optional(),
-        detailObject: z =>
-          z.any({ description: 'A valid JSON object.' }).optional(),
-        detailType: z =>
-          z.string({
-            description:
-              'Free-form string, with a maximum of 128 characters, used to decide what fields to expect in the event detail.',
-          }),
-        eventBusName: z =>
-          z.string({
-            description:
-              'The name or ARN of the event bus to receive the event.',
-          }),
-      },
+      input: z.object({
+        accountId: z
+          .string({
+            description: 'The AWS account ID to create the resource.',
+          })
+          .optional(),
+        region: z
+          .string({ description: 'The AWS region to create the resource.' })
+          .optional(),
+        source: z.string({ description: 'The source of the event.' }),
+        detail: z
+          .string({ description: 'A valid JSON object as a string.' })
+          .optional(),
+        detailObject: z
+          .any({ description: 'A valid JSON object.' })
+          .optional(),
+        detailType: z.string({
+          description:
+            'Free-form string, with a maximum of 128 characters, used to decide what fields to expect in the event detail.',
+        }),
+        eventBusName: z.string({
+          description:
+            'The name or ARN of the event bus to receive the event.',
+        }),
+      }),
     },
     async handler(ctx) {
       const {

@@ -12,6 +12,7 @@
  */
 
 import { createTemplateAction } from '@backstage/plugin-scaffolder-node';
+import { z } from 'zod';
 import {
   CloudControlClient,
   CreateResourceCommand,
@@ -29,69 +30,61 @@ export function createAwsCloudControlCreateAction(options: {
     id: 'aws:cloudcontrol:create',
     description: 'Creates the specified resource.',
     schema: {
-      input: {
-        accountId: z =>
-          z
-            .string({
-              description: 'The AWS account ID to create the resource.',
-            })
-            .optional(),
-        region: z =>
-          z
-            .string({ description: 'The AWS region to create the resource.' })
-            .optional(),
-        typeName: z =>
-          z.string({ description: 'The name of the resource type.' }),
-        desiredState: z =>
-          z.string({
+      input: z.object({
+        accountId: z
+          .string({
+            description: 'The AWS account ID to create the resource.',
+          })
+          .optional(),
+        region: z
+          .string({ description: 'The AWS region to create the resource.' })
+          .optional(),
+        typeName: z.string({
+          description: 'The name of the resource type.',
+        }),
+        desiredState: z.string({
+          description:
+            "Structured data format representing the desired state of the resource, consisting of that resource's properties and their desired values.",
+        }),
+        clientToken: z
+          .string({
             description:
-              "Structured data format representing the desired state of the resource, consisting of that resource's properties and their desired values.",
-          }),
-        clientToken: z =>
-          z
-            .string({
-              description:
-                'A unique identifier to ensure the idempotency of the resource request.',
-            })
-            .optional(),
-        roleArn: z =>
-          z
-            .string({
-              description:
-                'IAM role for Cloud Control API to use when performing this resource operation.',
-            })
-            .optional(),
-        typeVersionId: z =>
-          z
-            .string({
-              description:
-                'For private resource types, the type version to use in this resource operation.',
-            })
-            .optional(),
-        wait: z =>
-          z
-            .boolean({
-              description:
-                'Whether the action should wait until the requested resource is created.',
-            })
-            .optional()
-            .default(false),
-        maxWaitTime: z =>
-          z
-            .number({
-              description:
-                'If this action is configured to wait this is the maximum time in seconds it will wait before failing.',
-            })
-            .optional()
-            .default(120),
-      },
-      output: {
-        identifier: z =>
-          z.string({
+              'A unique identifier to ensure the idempotency of the resource request.',
+          })
+          .optional(),
+        roleArn: z
+          .string({
             description:
-              'The primary identifier for the resource (only available if wait is enabled).',
-          }),
-      },
+              'IAM role for Cloud Control API to use when performing this resource operation.',
+          })
+          .optional(),
+        typeVersionId: z
+          .string({
+            description:
+              'For private resource types, the type version to use in this resource operation.',
+          })
+          .optional(),
+        wait: z
+          .boolean({
+            description:
+              'Whether the action should wait until the requested resource is created.',
+          })
+          .optional()
+          .default(false),
+        maxWaitTime: z
+          .number({
+            description:
+              'If this action is configured to wait this is the maximum time in seconds it will wait before failing.',
+          })
+          .optional()
+          .default(120),
+      }),
+      output: z.object({
+        identifier: z.string({
+          description:
+            'The primary identifier for the resource (only available if wait is enabled).',
+        }),
+      }),
     },
     async handler(ctx) {
       const {

@@ -12,6 +12,7 @@
  */
 
 import { createTemplateAction } from '@backstage/plugin-scaffolder-node';
+import { z } from 'zod';
 import {
   CodeCommitClient,
   CreateCommitCommand,
@@ -32,69 +33,63 @@ export function createAwsCodeCommitPublishAction(options: {
     description:
       'Initializes a git repository of the content in the workspace, and publishes it to AWS CodeCommit.',
     schema: {
-      input: {
-        accountId: z =>
-          z
-            .string({
-              description: 'The AWS account ID to create the resource.',
-            })
-            .optional(),
-        region: z =>
-          z
-            .string({ description: 'The AWS region to create the resource.' })
-            .optional(),
-        repositoryName: z =>
-          z.string({ description: 'Name of the AWS CodeCommit repository.' }),
-        defaultBranch: z =>
-          z.string({
-            description: `Sets the default branch on the repository. The default value is 'main'`,
-          }),
-        sourcePath: z =>
-          z
-            .string({
-              description:
-                'Path within the workspace that will be used as the repository root. If omitted, the entire workspace will be published as the repository.',
-            })
-            .optional(),
-        gitCommitMessage: z =>
-          z
-            .string({
-              description: `Sets the commit message on the repository. The default value is 'initial commit'`,
-            })
-            .optional(),
-        gitAuthorName: z =>
-          z
-            .string({
-              description: `Sets the default author name for the commit. The default value is 'Scaffolder'`,
-            })
-            .optional(),
-        gitAuthorEmail: z =>
-          z
-            .string({
-              description: `Sets the default author email for the commit.`,
-            })
-            .optional(),
-      },
-      output: {
-        arn: z => z.string({ description: 'ARN of the repository' }).optional(),
-        repositoryName: z =>
-          z.string({ description: "The repository's name" }).optional(),
-        repositoryId: z =>
-          z.string({ description: 'The ID of the repository' }).optional(),
-        cloneUrlHttp: z =>
-          z
-            .string({
-              description:
-                'The URL to use for cloning the repository over HTTPS',
-            })
-            .optional(),
-        cloneUrlSsh: z =>
-          z
-            .string({
-              description: 'The URL to use for cloning the repository over SSH',
-            })
-            .optional(),
-      },
+      input: z.object({
+        accountId: z
+          .string({
+            description: 'The AWS account ID to create the resource.',
+          })
+          .optional(),
+        region: z
+          .string({ description: 'The AWS region to create the resource.' })
+          .optional(),
+        repositoryName: z.string({
+          description: 'Name of the AWS CodeCommit repository.',
+        }),
+        defaultBranch: z.string({
+          description: `Sets the default branch on the repository. The default value is 'main'`,
+        }),
+        sourcePath: z
+          .string({
+            description:
+              'Path within the workspace that will be used as the repository root. If omitted, the entire workspace will be published as the repository.',
+          })
+          .optional(),
+        gitCommitMessage: z
+          .string({
+            description: `Sets the commit message on the repository. The default value is 'initial commit'`,
+          })
+          .optional(),
+        gitAuthorName: z
+          .string({
+            description: `Sets the default author name for the commit. The default value is 'Scaffolder'`,
+          })
+          .optional(),
+        gitAuthorEmail: z
+          .string({
+            description: `Sets the default author email for the commit.`,
+          })
+          .optional(),
+      }),
+      output: z.object({
+        arn: z.string({ description: 'ARN of the repository' }).optional(),
+        repositoryName: z
+          .string({ description: "The repository's name" })
+          .optional(),
+        repositoryId: z
+          .string({ description: 'The ID of the repository' })
+          .optional(),
+        cloneUrlHttp: z
+          .string({
+            description:
+              'The URL to use for cloning the repository over HTTPS',
+          })
+          .optional(),
+        cloneUrlSsh: z
+          .string({
+            description: 'The URL to use for cloning the repository over SSH',
+          })
+          .optional(),
+      }),
     },
     async handler(ctx) {
       const {
