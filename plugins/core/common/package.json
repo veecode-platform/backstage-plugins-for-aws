@@ -29,7 +29,11 @@
     "prepack": "backstage-cli package prepack",
     "postpack": "backstage-cli package postpack"
   },
-  "dependencies": {
+  "peerDependencies": {
+    "@backstage/catalog-model": "^1.7.6",
+    "@backstage/config": "^1.3.6"
+  },
+  "devDependencies": {
     "@backstage/catalog-model": "^1.7.6",
     "@backstage/config": "^1.3.6"
   },

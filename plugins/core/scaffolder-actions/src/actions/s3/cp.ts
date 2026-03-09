@@ -14,7 +14,6 @@
 // Based on https://github.com/RoadieHQ/roadie-backstage-plugins/blob/35c787dc759897fdc1b88bd620d5af20cc6f7648/plugins/scaffolder-actions/scaffolder-backend-module-aws/src/actions/s3/cp.ts
 
 import { createTemplateAction } from '@backstage/plugin-scaffolder-node';
-import { z } from 'zod';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { AwsCredentialsManager } from '@backstage/integration-aws-node';
 import { AwsCredentialIdentityProvider } from '@aws-sdk/types';
@@ -30,7 +29,7 @@ export function createAwsS3CpAction(options: {
     id: 'aws:s3:cp',
     description: 'Copies files to an Amazon S3 bucket',
     schema: {
-      input: z.object({
+      input: z => z.object({
         accountId: z
           .string({
             description: 'The AWS account ID to create the resource.',

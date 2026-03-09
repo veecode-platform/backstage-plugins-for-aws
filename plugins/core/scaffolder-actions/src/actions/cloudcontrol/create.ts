@@ -12,7 +12,6 @@
  */
 
 import { createTemplateAction } from '@backstage/plugin-scaffolder-node';
-import { z } from 'zod';
 import {
   CloudControlClient,
   CreateResourceCommand,
@@ -30,7 +29,7 @@ export function createAwsCloudControlCreateAction(options: {
     id: 'aws:cloudcontrol:create',
     description: 'Creates the specified resource.',
     schema: {
-      input: z.object({
+      input: z => z.object({
         accountId: z
           .string({
             description: 'The AWS account ID to create the resource.',
@@ -79,7 +78,7 @@ export function createAwsCloudControlCreateAction(options: {
           .optional()
           .default(120),
       }),
-      output: z.object({
+      output: z => z.object({
         identifier: z.string({
           description:
             'The primary identifier for the resource (only available if wait is enabled).',

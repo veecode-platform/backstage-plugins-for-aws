@@ -12,7 +12,6 @@
  */
 
 import { createTemplateAction } from '@backstage/plugin-scaffolder-node';
-import { z } from 'zod';
 import {
   EventBridgeClient,
   PutEventsCommand,
@@ -29,7 +28,7 @@ export const createAwsEventBridgeEventAction = (options: {
     description:
       'Posts an AWS EventBridge event matching the provided details.',
     schema: {
-      input: z.object({
+      input: z => z.object({
         accountId: z
           .string({
             description: 'The AWS account ID to create the resource.',

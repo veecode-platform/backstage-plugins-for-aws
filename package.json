@@ -26,7 +26,8 @@
   "workspaces": {
     "packages": [
       "packages/*",
-      "plugins/**"
+      "plugins/**",
+      "!plugins/**/dist-dynamic/**"
     ]
   },
   "devDependencies": {

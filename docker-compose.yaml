@@ -1,0 +1,20 @@
+services:
+  devportal:
+    image: veecode/devportal:latest
+    ports:
+      - "7007:7007"
+    environment:
+      - DEVELOPMENT=true
+      - LOG_LEVEL=info
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_SESSION_TOKEN
+      - AWS_REGION=us-east-1
+    volumes:
+      - ./app-config.dynamic.yaml:/app/app-config.local.yaml:ro
+      - ./dynamic-plugins.yaml:/app/dynamic-plugins.yaml:ro
+      # examples
+      - ./examples:/app/examples:ro
+      # mounting dist-dynamic directly, no need to npm publish
+      - ./plugins/ecs/backend/dist-dynamic:/app/dynamic-plugins/dist/aws-amazon-ecs-plugin-for-backstage-backend-dynamic:ro
+      - ./plugins/ecs/frontend/dist-dynamic:/app/dynamic-plugins/dist/aws-amazon-ecs-plugin-for-backstage-dynamic:ro

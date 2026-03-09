@@ -1,0 +1,7 @@
+# local configs
+scaffolder:
+  defaultEnvironment:
+    parameters:
+      region: eu-east-1
+      organizationName: veecode-saas
+

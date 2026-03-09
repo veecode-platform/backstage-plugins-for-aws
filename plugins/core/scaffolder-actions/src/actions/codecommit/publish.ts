@@ -12,7 +12,6 @@
  */
 
 import { createTemplateAction } from '@backstage/plugin-scaffolder-node';
-import { z } from 'zod';
 import {
   CodeCommitClient,
   CreateCommitCommand,
@@ -33,7 +32,7 @@ export function createAwsCodeCommitPublishAction(options: {
     description:
       'Initializes a git repository of the content in the workspace, and publishes it to AWS CodeCommit.',
     schema: {
-      input: z.object({
+      input: z => z.object({
         accountId: z
           .string({
             description: 'The AWS account ID to create the resource.',
@@ -70,7 +69,7 @@ export function createAwsCodeCommitPublishAction(options: {
           })
           .optional(),
       }),
-      output: z.object({
+      output: z => z.object({
         arn: z.string({ description: 'ARN of the repository' }).optional(),
         repositoryName: z
           .string({ description: "The repository's name" })

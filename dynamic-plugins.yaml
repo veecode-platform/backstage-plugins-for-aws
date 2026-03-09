@@ -1,0 +1,23 @@
+includes:
+  - dynamic-plugins.default.yaml
+
+plugins:
+  - package: ./dynamic-plugins/dist/aws-amazon-ecs-plugin-for-backstage-backend-dynamic
+    disabled: false
+
+  - package: ./dynamic-plugins/dist/aws-amazon-ecs-plugin-for-backstage-dynamic
+    disabled: false
+    pluginConfig:
+      dynamicPlugins:
+        frontend:
+          aws.amazon-ecs-plugin-for-backstage:
+            entityTabs:
+              - path: /amazon-ecs
+                title: Amazon ECS
+                mountPoint: entity.page.amazon-ecs
+            mountPoints:
+              - mountPoint: entity.page.amazon-ecs/cards
+                importName: EntityAmazonEcsServicesContent
+                config:
+                  layout:
+                    gridColumn: "1 / -1"
