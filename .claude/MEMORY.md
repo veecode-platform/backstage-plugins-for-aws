@@ -18,10 +18,26 @@
 
 ## Dynamic Plugins
 
-- ECS plugins configured for dynamic export via `@red-hat-developer-hub/cli`
+- ECS and ECR plugins configured for dynamic export via `@red-hat-developer-hub/cli`
 - Root files: `dynamic-plugins.yaml`, `docker-compose.yaml`, `Makefile`
-- Build dynamic: `make build-dynamic` (runs static build first, then `rhdh-cli plugin export`)
-- `dist-dynamic/` directories are gitignored in frontend/backend
+- `dist-dynamic/` directories are gitignored in each plugin's frontend/backend
+- `plugins/**/dist-dynamic/**` excluded from Yarn workspaces to avoid duplicate workspace name errors
+- Core common/node packages have `@backstage/*` as peerDependencies (not dependencies) to avoid propagation
+
+### Makefile targets
+
+- `make build` — static build (install, tsc, build:all)
+- `make build-dynamic` — static build + per-plugin `yarn export-dynamic`
+- `make package-dynamic` — static build + `rhdh-cli plugin package` (OCI image, runs from root)
+- `make publish-dynamic` — package-dynamic + push OCI image
+- OCI image defaults: `quay.io/veecode/backstage-aws-dynamic-plugins:$(VERSION)`, overridable via `IMAGE_REGISTRY`, `IMAGE_NAME`, `CONTAINER_TOOL`
+
+### rhdh-cli behavior
+
+- `rhdh-cli plugin package` (from root) scans all workspace packages for frontend-plugin/backend-plugin roles
+- If a plugin has an `export-dynamic` script in package.json, it runs `yarn export-dynamic` (honors `--embed-package` flags)
+- If `dist-dynamic/` already exists, it skips re-export unless `--force-export`
+- Backend plugins use `--embed-package` for `@aws/aws-core-plugin-for-backstage-common` and `@aws/aws-core-plugin-for-backstage-node`
 
 ## Merge Strategy
 
