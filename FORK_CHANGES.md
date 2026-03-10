@@ -36,9 +36,10 @@ resolve `yarn.lock` conflicts by running `yarn install` after merging
 
 ### 2. Scaffolder Actions — Zod Schema Migration
 
-The four scaffolder actions used the **old schema builder format**
-(`field: z => z.type()`), which is incompatible with Backstage >= 1.48.
-They were migrated to the **new `z.object()` format**.
+The four scaffolder actions used the **old `z.object()` format** (direct
+Zod import), which is incompatible with Backstage >= 1.48. They were
+migrated to the **function wrapper format** (`input: z => z.object({...})`),
+where `z` is injected by the scaffolder framework.
 
 **Affected files:**
 
@@ -49,17 +50,18 @@ They were migrated to the **new `z.object()` format**.
 
 **What changed in each file:**
 
-- Added `import { z } from 'zod'` (explicit import instead of builder parameter)
-- Changed `input: { field: z => z.string()... }` to `input: z.object({ field: z.string()... })`
-- Changed `output: { field: z => z.string()... }` to `output: z.object({ field: z.string()... })`
+- Removed `import { z } from 'zod'` (no longer needed)
+- Changed `input: z.object({ ... })` to `input: z => z.object({ ... })`
+- Changed `output: z.object({ ... })` to `output: z => z.object({ ... })`
 - No handler logic was modified
 
 **Merge guidance:** If upstream migrates these schemas themselves, accept
 upstream's version (they will be functionally equivalent). If upstream adds
-**new** scaffolder actions, ensure they also use the `z.object()` format —
-the old builder format will crash on startup. If upstream modifies the
-schema fields (adds/removes/renames fields) but keeps the old format,
-apply the field changes but convert them to the `z.object()` format.
+**new** scaffolder actions, ensure they also use the `z => z.object()`
+function wrapper format — the old format will fail type checking. If
+upstream modifies the schema fields (adds/removes/renames fields) but keeps
+the old format, apply the field changes but convert them to the function
+wrapper format.
 
 ### 3. Scaffolder Module — Extension Point Import Path
 
@@ -83,12 +85,113 @@ upstream's version. If upstream still uses the `/alpha` path after a merge,
 this fix must be reapplied — the old import returns `undefined` and causes
 `TypeError: Cannot read properties of undefined (reading 'id')` at startup.
 
-### 4. Fork-Only Files
+### 4. LangChain Import Fix
+
+The `StreamEvent` type was imported from an internal `dist/` path that
+is not a public export in newer `@langchain/core` versions.
+
+**Affected file:**
+
+- `plugins/genai/agent-langgraph/src/util/transform.ts`
+
+**What changed:**
+
+```diff
+-import { StreamEvent } from '@langchain/core/dist/tracers/event_stream';
++import type { StreamEvent } from '@langchain/core/tracers/log_stream';
+```
+
+**Merge guidance:** If upstream fixes this import themselves, accept
+upstream's version. If upstream still uses the internal `dist/` path,
+this fix must be reapplied.
+
+### 5. Circular Dependency Fix in Core Node
+
+The `resource-locator-factory.ts` imported from the barrel `'.'`
+(index.ts), which re-exports that same file, creating a circular
+dependency. Fixed by using direct file imports.
+
+**Affected file:**
+
+- `plugins/core/node/src/locator/resource-locator-factory.ts`
+
+**What changed:**
+
+```diff
+-import { AwsResourceLocator, AwsResourceTaggingApiLocator } from '.';
++import { AwsResourceLocator } from './resource-locator';
++import { AwsResourceTaggingApiLocator } from './resource-tagging-api-locator';
+```
+
+**Merge guidance:** If upstream fixes this themselves, accept upstream's
+version. Otherwise reapply after merge.
+
+### 6. Core Libraries — Backstage Dependencies as peerDependencies
+
+Moved `@backstage/*` packages from `dependencies` to `peerDependencies`
+(+ `devDependencies`) in the core libraries to prevent them from
+propagating fixed Backstage versions to consumers.
+
+**Affected files:**
+
+- `plugins/core/common/package.json` — `@backstage/catalog-model`, `@backstage/config`
+- `plugins/core/node/package.json` — `@backstage/backend-plugin-api`, `@backstage/config`, `@backstage/integration-aws-node`
+
+**Merge guidance:** If upstream adds new `@backstage/*` dependencies to
+these packages, ensure they go into `peerDependencies` + `devDependencies`
+rather than `dependencies`.
+
+### 7. Workspace Configuration
+
+Added `!plugins/**/dist-dynamic/**` exclusion to the root `package.json`
+workspaces to prevent Yarn from discovering `package.json` files inside
+`dist-dynamic/embedded/` directories (which causes duplicate workspace
+name errors).
+
+**Affected file:**
+
+- `package.json` (root)
+
+**Merge guidance:** Preserve this exclusion after any merge.
+
+### 8. Dynamic Plugin Support (ECS + ECR)
+
+Added `@red-hat-developer-hub/cli` and `export-dynamic` scripts to the
+ECS and ECR frontend/backend plugins, enabling them to be exported as
+dynamic plugins for Red Hat Developer Hub / DevPortal.
+
+**Affected files:**
+
+- `plugins/ecs/frontend/package.json` — added scripts + devDep
+- `plugins/ecs/backend/package.json` — added scripts + devDep
+- `plugins/ecr/frontend/package.json` — added scripts + devDep
+- `plugins/ecr/backend/package.json` — added scripts + devDep
+- `plugins/ecs/frontend/.gitignore` — ignores `dist-dynamic/`
+- `plugins/ecs/backend/.gitignore` — ignores `dist-dynamic/`
+- `plugins/ecr/frontend/.gitignore` — ignores `dist-dynamic/`
+- `plugins/ecr/backend/.gitignore` — ignores `dist-dynamic/`
+
+**New fork-only files:**
+
+- `dynamic-plugins.yaml` — dynamic plugin loading configuration
+- `docker-compose.yaml` — local dev with devportal image
+- `Makefile` — build, export, and publish targets
+- `app-config.dynamic.yaml` — app config for dynamic plugin dev
+
+**Merge guidance:** These are fork-only additions. Upstream does not have
+dynamic plugin support. Always keep ours.
+
+### 9. Fork-Only Files
 
 These files exist only in the fork and should never conflict with upstream:
 
 - `CLAUDE.md` — Claude Code guidance file
+- `.claude/MEMORY.md` — Claude Code project memory
 - `FORK_CHANGES.md` — this file
+- `Makefile` — build/publish automation
+- `docker-compose.yaml` — local dev with devportal
+- `dynamic-plugins.yaml` — dynamic plugin configuration
+- `app-config.dynamic.yaml` — app config for dynamic plugin dev
 
 **Merge guidance:** Always keep these files. They will not conflict since
 upstream does not have them.

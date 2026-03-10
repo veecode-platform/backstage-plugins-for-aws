@@ -14,6 +14,8 @@
 - The `import { z } from 'zod'` is no longer needed in scaffolder actions — `z` comes as a function parameter
 - `scaffolderActionsExtensionPoint` import moved from `/alpha` to main export
 - `@langchain/core` StreamEvent import: use `@langchain/core/tracers/log_stream` (not internal `dist/` path)
+- Circular dependency in `core/node` resource-locator-factory fixed (direct imports instead of barrel)
+- Core common/node packages have `@backstage/*` as peerDependencies (not dependencies) to avoid propagation
 - Fork-only files: `CLAUDE.md`, `FORK_CHANGES.md`, `.claude/MEMORY.md`
 
 ## Dynamic Plugins
@@ -22,22 +24,20 @@
 - Root files: `dynamic-plugins.yaml`, `docker-compose.yaml`, `Makefile`
 - `dist-dynamic/` directories are gitignored in each plugin's frontend/backend
 - `plugins/**/dist-dynamic/**` excluded from Yarn workspaces to avoid duplicate workspace name errors
-- Core common/node packages have `@backstage/*` as peerDependencies (not dependencies) to avoid propagation
 
 ### Makefile targets
 
 - `make build` — static build (install, tsc, build:all)
 - `make build-dynamic` — static build + per-plugin `yarn export-dynamic`
-- `make package-dynamic` — static build + `rhdh-cli plugin package` (OCI image, runs from root)
-- `make publish-dynamic` — package-dynamic + push OCI image
-- OCI image defaults: `quay.io/veecode/backstage-aws-dynamic-plugins:$(VERSION)`, overridable via `IMAGE_REGISTRY`, `IMAGE_NAME`, `CONTAINER_TOOL`
+- `make publish` — publish static plugins to npm
+- `make publish-dynamic` — build-dynamic + npm publish from each dist-dynamic/
 
 ### rhdh-cli behavior
 
-- `rhdh-cli plugin package` (from root) scans all workspace packages for frontend-plugin/backend-plugin roles
-- If a plugin has an `export-dynamic` script in package.json, it runs `yarn export-dynamic` (honors `--embed-package` flags)
-- If `dist-dynamic/` already exists, it skips re-export unless `--force-export`
+- `rhdh-cli plugin package` from root scans ALL workspace packages — not usable in this monorepo (tries to package codebuild, codepipeline, genai, etc.)
+- Instead we run per-plugin `yarn export-dynamic` from each frontend/backend dir
 - Backend plugins use `--embed-package` for `@aws/aws-core-plugin-for-backstage-common` and `@aws/aws-core-plugin-for-backstage-node`
+- If a plugin has an `export-dynamic` script in package.json, `rhdh-cli plugin package` will use it (honors `--embed-package` flags)
 
 ## Merge Strategy
 
