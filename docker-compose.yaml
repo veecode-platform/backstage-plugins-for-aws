@@ -18,3 +18,5 @@ services:
       # mounting dist-dynamic directly, no need to npm publish
       - ./plugins/ecs/backend/dist-dynamic:/app/dynamic-plugins/dist/aws-amazon-ecs-plugin-for-backstage-backend-dynamic:ro
       - ./plugins/ecs/frontend/dist-dynamic:/app/dynamic-plugins/dist/aws-amazon-ecs-plugin-for-backstage-dynamic:ro
+      - ./plugins/ecr/backend/dist-dynamic:/app/dynamic-plugins/dist/aws-amazon-ecr-plugin-for-backstage-backend-dynamic:ro
+      - ./plugins/ecr/frontend/dist-dynamic:/app/dynamic-plugins/dist/aws-amazon-ecr-plugin-for-backstage-dynamic:ro

@@ -21,3 +21,23 @@ plugins:
                 config:
                   layout:
                     gridColumn: "1 / -1"
+
+  - package: ./dynamic-plugins/dist/aws-amazon-ecr-plugin-for-backstage-backend-dynamic
+    disabled: false
+
+  - package: ./dynamic-plugins/dist/aws-amazon-ecr-plugin-for-backstage-dynamic
+    disabled: false
+    pluginConfig:
+      dynamicPlugins:
+        frontend:
+          aws.amazon-ecr-plugin-for-backstage:
+            entityTabs:
+              - path: /amazon-ecr
+                title: Amazon ECR
+                mountPoint: entity.page.amazon-ecr
+            mountPoints:
+              - mountPoint: entity.page.amazon-ecr/cards
+                importName: EntityAmazonEcrImagesContent
+                config:
+                  layout:
+                    gridColumn: "1 / -1"

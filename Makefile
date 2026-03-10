@@ -1,5 +1,5 @@
 #
-# Makefile for ECS plugins workspace
+# Makefile for AWS plugins workspace
 # - Handles frontend and backend plugins
 # - Supports both static and dynamic plugin builds
 #
@@ -8,26 +8,39 @@ VERSION ?= 0.1.0
 NPM_REGISTRY =
 NPM_REGISTRY_ARGS = $(if $(NPM_REGISTRY),--registry $(NPM_REGISTRY))
 
-# Plugin directories
-FRONTEND_DIR = plugins/ecs/frontend
-BACKEND_DIR = plugins/ecs/backend
+# OCI image settings
+IMAGE_REGISTRY ?= quay.io/veecode
+IMAGE_NAME ?= backstage-aws-dynamic-plugins
+IMAGE_TAG = $(IMAGE_REGISTRY)/$(IMAGE_NAME):$(VERSION)
+CONTAINER_TOOL ?= podman
 
-ALL_PLUGIN_DIRS = $(FRONTEND_DIR) $(BACKEND_DIR)
+# ECS plugin directories
+ECS_FRONTEND_DIR = plugins/ecs/frontend
+ECS_BACKEND_DIR = plugins/ecs/backend
 
-.PHONY: help build build-dynamic publish publish-dynamic \
+# ECR plugin directories
+ECR_FRONTEND_DIR = plugins/ecr/frontend
+ECR_BACKEND_DIR = plugins/ecr/backend
+
+ALL_PLUGIN_DIRS = $(ECS_FRONTEND_DIR) $(ECS_BACKEND_DIR) $(ECR_FRONTEND_DIR) $(ECR_BACKEND_DIR)
+
+.PHONY: help build build-dynamic package-dynamic publish publish-dynamic \
 	set-version get-version unpublish clean clean-dynamic
 
 help:
-	@echo "ECS Plugins Workspace Makefile"
+	@echo "AWS Plugins Workspace Makefile"
 	@echo "=============================="
 	@echo ""
 	@echo "Build Commands:"
 	@echo "  make build               - Build all static plugins"
 	@echo "  make build-dynamic       - Build all dynamic plugins"
 	@echo ""
+	@echo "Dynamic Plugin Image Commands:"
+	@echo "  make package-dynamic     - Build OCI image with all dynamic plugins"
+	@echo "  make publish-dynamic     - Build and push OCI image to registry"
+	@echo ""
 	@echo "Publish Commands:"
-	@echo "  make publish             - Publish all static plugins"
-	@echo "  make publish-dynamic     - Publish all dynamic plugins"
+	@echo "  make publish             - Publish all static plugins to npm"
 	@echo ""
 	@echo "Utility Commands:"
 	@echo "  make set-version VERSION=x.y.z - Set version for all packages"
@@ -36,10 +49,10 @@ help:
 	@echo "  make clean               - Full clean (node_modules, dist, logs, .tgz)"
 	@echo "  make clean-dynamic       - Clean only dist-dynamic directories"
 
-# Set version for all ECS packages
+# Set version for all AWS packages
 # Usage: make set-version VERSION=0.2.0
 set-version:
-	@echo "Setting ECS packages to version $(VERSION)..."
+	@echo "Setting AWS packages to version $(VERSION)..."
 	@for dir in $(ALL_PLUGIN_DIRS); do \
 		sed -i '' 's/"version": "[^"]*"/"version": "$(VERSION)"/' $$dir/package.json; \
 		echo "  Updated $$dir"; \
@@ -53,8 +66,10 @@ build:
 
 # Build all dynamic plugins
 build-dynamic: build
-	cd $(FRONTEND_DIR) && yarn export-dynamic
-	cd $(BACKEND_DIR) && yarn export-dynamic
+	cd $(ECS_FRONTEND_DIR) && yarn export-dynamic
+	cd $(ECS_BACKEND_DIR) && yarn export-dynamic
+	cd $(ECR_FRONTEND_DIR) && yarn export-dynamic
+	cd $(ECR_BACKEND_DIR) && yarn export-dynamic
 
 # Helper: publish a single plugin if not already published
 define publish_plugin
@@ -70,19 +85,26 @@ endef
 
 # Publish all static plugins
 publish: build
-	@echo "Publishing ECS plugins..."
-	$(call publish_plugin,$(FRONTEND_DIR))
-	$(call publish_plugin,$(BACKEND_DIR))
+	@echo "Publishing AWS plugins..."
+	$(call publish_plugin,$(ECS_FRONTEND_DIR))
+	$(call publish_plugin,$(ECS_BACKEND_DIR))
+	$(call publish_plugin,$(ECR_FRONTEND_DIR))
+	$(call publish_plugin,$(ECR_BACKEND_DIR))
 
-# Publish all dynamic plugins
-publish-dynamic: build-dynamic
-	@echo "Publishing dynamic variants..."
-	@cd $(FRONTEND_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
-	@cd $(BACKEND_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
+# Build OCI image with all dynamic plugins (re-uses existing dist-dynamic if present)
+package-dynamic: build
+	rhdh-cli plugin package \
+		--tag $(IMAGE_TAG) \
+		--container-tool $(CONTAINER_TOOL)
+
+# Build and push OCI image to registry
+publish-dynamic: package-dynamic
+	@echo "Pushing $(IMAGE_TAG)..."
+	$(CONTAINER_TOOL) push $(IMAGE_TAG)
 
 # Get latest versions in npm registry
 get-version:
-	@echo "Getting latest versions in npm registry for ECS plugins..."
+	@echo "Getting latest versions in npm registry for AWS plugins..."
 	@for dir in $(ALL_PLUGIN_DIRS); do \
 		PACKAGE_NAME=$$(node -p "require('./$$dir/package.json').name"); \
 		echo "$$PACKAGE_NAME:"; \
@@ -91,7 +113,7 @@ get-version:
 
 # Unpublish all packages
 unpublish:
-	@echo "Unpublishing ECS packages..."
+	@echo "Unpublishing AWS packages..."
 	@for dir in $(ALL_PLUGIN_DIRS); do \
 		PACKAGE_NAME=$$(node -p "require('./$$dir/package.json').name"); \
 		npm unpublish $$PACKAGE_NAME@$(VERSION) $(NPM_REGISTRY_ARGS) 2>/dev/null || true; \
@@ -101,25 +123,25 @@ unpublish:
 
 # Full clean
 clean:
-	@echo "Cleaning ECS workspace..."
+	@echo "Cleaning AWS workspace..."
 	yarn clean || true
 	rm -rf node_modules
 	rm -rf packages/*/node_modules
-	rm -rf plugins/*/node_modules
+	rm -rf plugins/*/*/node_modules
 	rm -rf dist-types
-	rm -rf plugins/*/dist
-	rm -rf plugins/*/dist-dynamic
-	rm -rf plugins/*/*.tgz
+	rm -rf plugins/*/*/dist
+	rm -rf plugins/*/*/dist-dynamic
+	rm -rf plugins/*/*/**.tgz
 	rm -rf packages/*/dist
 	find . -name "*.log" -type f -delete || true
 	find . -name "yarn-error.log" -type f -delete || true
 	find . -name "npm-debug.log*" -type f -delete || true
 	find . -name ".DS_Store" -type f -delete || true
-	@echo "ECS workspace clean complete!"
+	@echo "AWS workspace clean complete!"
 
 # Clean only dist-dynamic directories
 clean-dynamic:
-	@echo "Cleaning ECS dist-dynamic directories..."
+	@echo "Cleaning AWS dist-dynamic directories..."
 	@for dir in $(ALL_PLUGIN_DIRS); do \
 		rm -rf $$dir/dist-dynamic; \
 	done
