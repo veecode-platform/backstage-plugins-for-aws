@@ -8,12 +8,6 @@ VERSION ?= 0.1.0
 NPM_REGISTRY =
 NPM_REGISTRY_ARGS = $(if $(NPM_REGISTRY),--registry $(NPM_REGISTRY))
 
-# OCI image settings
-IMAGE_REGISTRY ?= quay.io/veecode
-IMAGE_NAME ?= backstage-aws-dynamic-plugins
-IMAGE_TAG = $(IMAGE_REGISTRY)/$(IMAGE_NAME):$(VERSION)
-CONTAINER_TOOL ?= podman
-
 # ECS plugin directories
 ECS_FRONTEND_DIR = plugins/ecs/frontend
 ECS_BACKEND_DIR = plugins/ecs/backend
@@ -24,7 +18,7 @@ ECR_BACKEND_DIR = plugins/ecr/backend
 
 ALL_PLUGIN_DIRS = $(ECS_FRONTEND_DIR) $(ECS_BACKEND_DIR) $(ECR_FRONTEND_DIR) $(ECR_BACKEND_DIR)
 
-.PHONY: help build build-dynamic package-dynamic publish publish-dynamic \
+.PHONY: help build build-dynamic publish publish-dynamic \
 	set-version get-version unpublish clean clean-dynamic
 
 help:
@@ -35,12 +29,9 @@ help:
 	@echo "  make build               - Build all static plugins"
 	@echo "  make build-dynamic       - Build all dynamic plugins"
 	@echo ""
-	@echo "Dynamic Plugin Image Commands:"
-	@echo "  make package-dynamic     - Build OCI image with all dynamic plugins"
-	@echo "  make publish-dynamic     - Build and push OCI image to registry"
-	@echo ""
 	@echo "Publish Commands:"
 	@echo "  make publish             - Publish all static plugins to npm"
+	@echo "  make publish-dynamic     - Publish all dynamic plugins to npm"
 	@echo ""
 	@echo "Utility Commands:"
 	@echo "  make set-version VERSION=x.y.z - Set version for all packages"
@@ -91,16 +82,13 @@ publish: build
 	$(call publish_plugin,$(ECR_FRONTEND_DIR))
 	$(call publish_plugin,$(ECR_BACKEND_DIR))
 
-# Build OCI image with all dynamic plugins (re-uses existing dist-dynamic if present)
-package-dynamic: build
-	rhdh-cli plugin package \
-		--tag $(IMAGE_TAG) \
-		--container-tool $(CONTAINER_TOOL)
-
-# Build and push OCI image to registry
-publish-dynamic: package-dynamic
-	@echo "Pushing $(IMAGE_TAG)..."
-	$(CONTAINER_TOOL) push $(IMAGE_TAG)
+# Publish all dynamic plugins to npm
+publish-dynamic: build-dynamic
+	@echo "Publishing dynamic variants..."
+	@cd $(ECS_FRONTEND_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
+	@cd $(ECS_BACKEND_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
+	@cd $(ECR_FRONTEND_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
+	@cd $(ECR_BACKEND_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
 
 # Get latest versions in npm registry
 get-version:
