@@ -22,3 +22,8 @@ services:
       - ./plugins/ecr/frontend/dist-dynamic:/app/dynamic-plugins/dist/aws-amazon-ecr-plugin-for-backstage-dynamic:ro
       - ./plugins/cost-insights/backend/dist-dynamic:/app/dynamic-plugins/dist/aws-cost-insights-plugin-for-backstage-backend-dynamic:ro
       - ./plugins/cost-insights/frontend/dist-dynamic:/app/dynamic-plugins/dist/aws-cost-insights-plugin-for-backstage-dynamic:ro
+      - ./plugins/securityhub/backend/dist-dynamic:/app/dynamic-plugins/dist/aws-securityhub-plugin-for-backstage-backend-dynamic:ro
+      - ./plugins/securityhub/frontend/dist-dynamic:/app/dynamic-plugins/dist/aws-securityhub-plugin-for-backstage-dynamic:ro
+      - ./plugins/genai/backend/dist-dynamic:/app/dynamic-plugins/dist/aws-genai-plugin-for-backstage-backend-dynamic:ro
+      - ./plugins/genai/frontend/dist-dynamic:/app/dynamic-plugins/dist/aws-genai-plugin-for-backstage-dynamic:ro
+      - ./plugins/genai/agent-langgraph/dist-dynamic:/app/dynamic-plugins/dist/aws-genai-plugin-langgraph-agent-for-backstage-dynamic:ro

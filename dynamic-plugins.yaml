@@ -47,3 +47,39 @@ plugins:
 
   - package: ./dynamic-plugins/dist/aws-cost-insights-plugin-for-backstage-dynamic
     disabled: false
+
+  - package: ./dynamic-plugins/dist/aws-securityhub-plugin-for-backstage-backend-dynamic
+    disabled: false
+
+  - package: ./dynamic-plugins/dist/aws-securityhub-plugin-for-backstage-dynamic
+    disabled: false
+    pluginConfig:
+      dynamicPlugins:
+        frontend:
+          aws.aws-securityhub-plugin-for-backstage:
+            entityTabs:
+              - path: /aws-securityhub
+                title: Security Hub
+                mountPoint: entity.page.aws-securityhub
+            mountPoints:
+              - mountPoint: entity.page.aws-securityhub/cards
+                importName: EntityAwsSecurityHubContent
+                config:
+                  layout:
+                    gridColumn: "1 / -1"
+
+  - package: ./dynamic-plugins/dist/aws-genai-plugin-for-backstage-backend-dynamic
+    disabled: false
+
+  - package: ./dynamic-plugins/dist/aws-genai-plugin-for-backstage-dynamic
+    disabled: false
+    pluginConfig:
+      dynamicPlugins:
+        frontend:
+          aws.genai-plugin-for-backstage:
+            dynamicRoutes:
+              - path: /aws-genai
+                importName: AgentChatPage
+
+  - package: ./dynamic-plugins/dist/aws-genai-plugin-langgraph-agent-for-backstage-dynamic
+    disabled: false

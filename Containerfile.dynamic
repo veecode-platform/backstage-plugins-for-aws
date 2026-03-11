@@ -5,6 +5,11 @@ COPY plugins/ecr/backend/dist-dynamic  /staging/aws-amazon-ecr-plugin-for-backst
 COPY plugins/ecr/frontend/dist-dynamic /staging/aws-amazon-ecr-plugin-for-backstage-frontend/
 COPY plugins/cost-insights/backend/dist-dynamic  /staging/aws-cost-insights-plugin-for-backstage-backend/
 COPY plugins/cost-insights/frontend/dist-dynamic /staging/aws-cost-insights-plugin-for-backstage-frontend/
+COPY plugins/securityhub/backend/dist-dynamic  /staging/aws-securityhub-plugin-for-backstage-backend/
+COPY plugins/securityhub/frontend/dist-dynamic /staging/aws-securityhub-plugin-for-backstage-frontend/
+COPY plugins/genai/backend/dist-dynamic         /staging/aws-genai-plugin-for-backstage-backend/
+COPY plugins/genai/frontend/dist-dynamic        /staging/aws-genai-plugin-for-backstage-frontend/
+COPY plugins/genai/agent-langgraph/dist-dynamic /staging/aws-genai-plugin-langgraph-agent-for-backstage/
 
 FROM scratch
 COPY --from=staging /staging/ /
