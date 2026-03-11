@@ -154,22 +154,30 @@ name errors).
 
 **Merge guidance:** Preserve this exclusion after any merge.
 
-### 8. Dynamic Plugin Support (ECS + ECR)
+### 8. Dynamic Plugin Support (ECS, ECR, Cost Insights, Security Hub, GenAI)
 
-Added `@red-hat-developer-hub/cli` and `export-dynamic` scripts to the
-ECS and ECR frontend/backend plugins, enabling them to be exported as
-dynamic plugins for Red Hat Developer Hub / DevPortal.
+Added `@red-hat-developer-hub/cli` and `export-dynamic` scripts to
+multiple plugin groups, enabling them to be exported as dynamic plugins
+for Red Hat Developer Hub / DevPortal.
 
-**Affected files:**
+**Affected files (scripts + devDep added):**
 
-- `plugins/ecs/frontend/package.json` — added scripts + devDep
-- `plugins/ecs/backend/package.json` — added scripts + devDep
-- `plugins/ecr/frontend/package.json` — added scripts + devDep
-- `plugins/ecr/backend/package.json` — added scripts + devDep
-- `plugins/ecs/frontend/.gitignore` — ignores `dist-dynamic/`
-- `plugins/ecs/backend/.gitignore` — ignores `dist-dynamic/`
-- `plugins/ecr/frontend/.gitignore` — ignores `dist-dynamic/`
-- `plugins/ecr/backend/.gitignore` — ignores `dist-dynamic/`
+- `plugins/ecs/frontend/package.json`, `plugins/ecs/backend/package.json`
+- `plugins/ecr/frontend/package.json`, `plugins/ecr/backend/package.json`
+- `plugins/cost-insights/frontend/package.json`, `plugins/cost-insights/backend/package.json`
+- `plugins/securityhub/frontend/package.json`, `plugins/securityhub/backend/package.json`
+- `plugins/genai/frontend/package.json`, `plugins/genai/backend/package.json`
+- `plugins/genai/agent-langgraph/package.json`
+
+**`.gitignore` files created** (all contain `dist-dynamic/`):
+
+- `plugins/{ecs,ecr,cost-insights,securityhub,genai}/{frontend,backend}/.gitignore`
+- `plugins/genai/agent-langgraph/.gitignore`
+
+**Pinned workspace dependency versions fixed to `workspace:^`:**
+
+- `plugins/securityhub/backend/package.json` — `@aws/aws-core-plugin-for-backstage-common`, `@aws/aws-core-plugin-for-backstage-node`, `@aws/genai-plugin-for-backstage-common`
+- `plugins/securityhub/frontend/package.json` — `@aws/aws-core-plugin-for-backstage-common`, `@aws/aws-core-plugin-for-backstage-react`
 
 **New fork-only files:**
 
@@ -178,8 +186,84 @@ dynamic plugins for Red Hat Developer Hub / DevPortal.
 - `Makefile` — build, export, publish, and OCI packaging targets
 - `app-config.dynamic.yaml` — app config for dynamic plugin dev
 
-**Merge guidance:** These are fork-only additions. Upstream does not have
-dynamic plugin support. Always keep ours.
+**Merge guidance:** The `export-dynamic` scripts, `@red-hat-developer-hub/cli`
+devDep, and `.gitignore` files are fork-only additions. The `workspace:^`
+fixes should be accepted by upstream or reapplied after merge.
+
+### 9. Security Hub — Remove @backstage/backend-common
+
+Replaced `createLegacyAuthAdapters` from the deprecated
+`@backstage/backend-common` package with direct usage of `auth` and
+`httpAuth` services from `@backstage/backend-plugin-api`. Removed the
+`@backstage/backend-common` dependency entirely.
+
+**Affected files:**
+
+- `plugins/securityhub/backend/src/service/router.ts`
+- `plugins/securityhub/backend/src/service/DefaultAwsSecurityHubService.ts`
+- `plugins/securityhub/backend/package.json`
+
+**What changed:**
+
+```diff
+-import { createLegacyAuthAdapters } from '@backstage/backend-common';
+-const { httpAuth } = createLegacyAuthAdapters(options);
++const { httpAuth } = options;
+```
+
+**Merge guidance:** If upstream removes `@backstage/backend-common` usage
+themselves, accept upstream's version. If upstream still uses it, this fix
+must be reapplied since dynamic plugins cannot load `@backstage/backend-common`.
+
+### 10. GenAI — Dynamic Import for SQLite Checkpoint
+
+Changed `@langchain/langgraph-checkpoint-sqlite` from a static import to
+a dynamic `import()` in the agent-langgraph plugin, so `better-sqlite3`
+(a native module) is only loaded when the sqlite checkpoint backend is
+configured. This enables `--suppress-native-package` in the dynamic
+plugin export without failing entry point validation.
+
+**Affected file:**
+
+- `plugins/genai/agent-langgraph/src/LangGraphReactAgentType.ts`
+
+**What changed:**
+
+```diff
+-import { SqliteSaver } from '@langchain/langgraph-checkpoint-sqlite';
+ ...
++const { SqliteSaver } = await import('@langchain/langgraph-checkpoint-sqlite');
+```
+
+**Merge guidance:** If upstream modifies `LangGraphReactAgentType.ts`,
+ensure the sqlite import remains dynamic (not static). A static import
+will break dynamic plugin export due to native module bundling.
+
+### 11. GenAI — Self-Referencing Package.json Import
+
+The genai backend's `McpService.ts` imported its own `package.json` via
+the package name (`@aws/genai-plugin-for-backstage-backend/package.json`),
+which fails in dynamic plugins where the package is renamed with a
+`-dynamic` suffix. Changed to a relative import.
+
+**Affected file:**
+
+- `plugins/genai/backend/src/service/McpService.ts`
+
+**What changed:**
+
+```diff
+-import { version } from '@aws/genai-plugin-for-backstage-backend/package.json';
++import packageJson from '../../package.json';
+ ...
+-  version,
++  version: packageJson.version,
+```
+
+**Merge guidance:** If upstream modifies `McpService.ts`, ensure the
+`package.json` import uses a relative path, not the package name.
+
+### 12. OCI Image Packaging
 
 ### 9. OCI Image Packaging
 
@@ -204,7 +288,7 @@ the npm package name without the `@aws/` scope (e.g.,
 
 **Merge guidance:** Fork-only. Upstream does not have OCI support.
 
-### 10. Fork-Only Files
+### 13. Fork-Only Files
 
 These files exist only in the fork and should never conflict with upstream:
 
@@ -218,6 +302,8 @@ These files exist only in the fork and should never conflict with upstream:
 - `dynamic-plugins.yaml` — dynamic plugin configuration (path-based)
 - `dynamic-plugins-oci.yaml` — dynamic plugin configuration (OCI-based)
 - `app-config.dynamic.yaml` — app config for dynamic plugin dev
+- `OCI.md` — OCI local testing guide
+- `registries.conf` — insecure registry config for local dev
 
 **Merge guidance:** Always keep these files. They will not conflict since
 upstream does not have them.

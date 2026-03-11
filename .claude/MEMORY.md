@@ -57,7 +57,10 @@
 
 - securityhub backend embeds `@aws/genai-plugin-for-backstage-common` (it imports `DefaultAgentClient`)
 - securityhub had pinned versions (`"0.5.0"`, `"0.1.0"`, `"^0.4.0"`) for workspace deps — fixed to `workspace:^`
+- securityhub backend: removed `@backstage/backend-common` dep, replaced `createLegacyAuthAdapters` with direct `auth`/`httpAuth` usage
+- genai backend: `McpService.ts` self-referencing package.json import changed to relative `../../package.json`
 - genai frontend exports `AgentChatPage` (standalone page at `/aws-genai`, not an entity tab)
+- genai agent-langgraph uses `--suppress-native-package better-sqlite3 --suppress-native-package napi-build-utils` + dynamic `import()` for sqlite checkpoint
 - cost-insights frontend is an API provider only (no UI components) — no `pluginConfig` needed
 
 ## Merge Strategy
