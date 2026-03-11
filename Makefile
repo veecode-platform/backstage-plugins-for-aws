@@ -22,7 +22,11 @@ ECS_BACKEND_DIR = plugins/ecs/backend
 ECR_FRONTEND_DIR = plugins/ecr/frontend
 ECR_BACKEND_DIR = plugins/ecr/backend
 
-ALL_PLUGIN_DIRS = $(ECS_FRONTEND_DIR) $(ECS_BACKEND_DIR) $(ECR_FRONTEND_DIR) $(ECR_BACKEND_DIR)
+# Cost Insights plugin directories
+COST_INSIGHTS_FRONTEND_DIR = plugins/cost-insights/frontend
+COST_INSIGHTS_BACKEND_DIR = plugins/cost-insights/backend
+
+ALL_PLUGIN_DIRS = $(ECS_FRONTEND_DIR) $(ECS_BACKEND_DIR) $(ECR_FRONTEND_DIR) $(ECR_BACKEND_DIR) $(COST_INSIGHTS_FRONTEND_DIR) $(COST_INSIGHTS_BACKEND_DIR)
 
 .PHONY: help build build-dynamic package-oci publish publish-dynamic publish-oci \
 	set-version get-version unpublish clean clean-dynamic
@@ -71,6 +75,8 @@ build-dynamic: build
 	cd $(ECS_BACKEND_DIR) && yarn export-dynamic
 	cd $(ECR_FRONTEND_DIR) && yarn export-dynamic
 	cd $(ECR_BACKEND_DIR) && yarn export-dynamic
+	cd $(COST_INSIGHTS_FRONTEND_DIR) && yarn export-dynamic
+	cd $(COST_INSIGHTS_BACKEND_DIR) && yarn export-dynamic
 
 # Helper: publish a single plugin if not already published
 define publish_plugin
@@ -91,6 +97,8 @@ publish: build
 	$(call publish_plugin,$(ECS_BACKEND_DIR))
 	$(call publish_plugin,$(ECR_FRONTEND_DIR))
 	$(call publish_plugin,$(ECR_BACKEND_DIR))
+	$(call publish_plugin,$(COST_INSIGHTS_FRONTEND_DIR))
+	$(call publish_plugin,$(COST_INSIGHTS_BACKEND_DIR))
 
 # Publish all dynamic plugins to npm
 publish-dynamic: build-dynamic
@@ -99,6 +107,8 @@ publish-dynamic: build-dynamic
 	@cd $(ECS_BACKEND_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
 	@cd $(ECR_FRONTEND_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
 	@cd $(ECR_BACKEND_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
+	@cd $(COST_INSIGHTS_FRONTEND_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
+	@cd $(COST_INSIGHTS_BACKEND_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
 
 # Build OCI image with dynamic plugins
 package-oci: build-dynamic

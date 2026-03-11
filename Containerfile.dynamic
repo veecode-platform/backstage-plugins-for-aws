@@ -3,6 +3,8 @@ COPY plugins/ecs/backend/dist-dynamic  /staging/aws-amazon-ecs-plugin-for-backst
 COPY plugins/ecs/frontend/dist-dynamic /staging/aws-amazon-ecs-plugin-for-backstage-frontend/
 COPY plugins/ecr/backend/dist-dynamic  /staging/aws-amazon-ecr-plugin-for-backstage-backend/
 COPY plugins/ecr/frontend/dist-dynamic /staging/aws-amazon-ecr-plugin-for-backstage-frontend/
+COPY plugins/cost-insights/backend/dist-dynamic  /staging/aws-cost-insights-plugin-for-backstage-backend/
+COPY plugins/cost-insights/frontend/dist-dynamic /staging/aws-cost-insights-plugin-for-backstage-frontend/
 
 FROM scratch
 COPY --from=staging /staging/ /

@@ -20,3 +20,5 @@ services:
       - ./plugins/ecs/frontend/dist-dynamic:/app/dynamic-plugins/dist/aws-amazon-ecs-plugin-for-backstage-dynamic:ro
       - ./plugins/ecr/backend/dist-dynamic:/app/dynamic-plugins/dist/aws-amazon-ecr-plugin-for-backstage-backend-dynamic:ro
       - ./plugins/ecr/frontend/dist-dynamic:/app/dynamic-plugins/dist/aws-amazon-ecr-plugin-for-backstage-dynamic:ro
+      - ./plugins/cost-insights/backend/dist-dynamic:/app/dynamic-plugins/dist/aws-cost-insights-plugin-for-backstage-backend-dynamic:ro
+      - ./plugins/cost-insights/frontend/dist-dynamic:/app/dynamic-plugins/dist/aws-cost-insights-plugin-for-backstage-dynamic:ro

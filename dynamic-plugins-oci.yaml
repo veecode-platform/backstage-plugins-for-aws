@@ -41,3 +41,9 @@ plugins:
                 config:
                   layout:
                     gridColumn: "1 / -1"
+
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-cost-insights-plugin-for-backstage-backend
+    disabled: false
+
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-cost-insights-plugin-for-backstage-frontend
+    disabled: false
