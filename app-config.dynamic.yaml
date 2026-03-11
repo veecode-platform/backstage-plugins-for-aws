@@ -8,3 +8,22 @@ scaffolder:
 # cost insights
 costInsights:
   engineerCost: 200000
+
+genai:
+  agents:
+    security-hub:
+      description: AWS Security Hub findings assistant
+      type: langgraph-react
+      prompt: |
+        You are an AWS security assistant.
+        Summarize AWS Security Hub findings and explain:
+        - what the issue is
+        - which resource is affected
+        - how to fix it.
+      actions:
+        - get-aws-securityhub-findings
+      langgraph:
+        messagesMaxTokens: 4096
+        bedrock:
+          modelId: us.anthropic.claude-sonnet-4-20250514-v1:0
+          region: us-east-1
