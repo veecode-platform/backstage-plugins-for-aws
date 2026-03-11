@@ -20,7 +20,7 @@
 
 ## Dynamic Plugins
 
-- ECS and ECR plugins configured for dynamic export via `@red-hat-developer-hub/cli`
+- ECS, ECR, cost-insights, securityhub, and genai plugins configured for dynamic export via `@red-hat-developer-hub/cli`
 - Root files: `dynamic-plugins.yaml`, `docker-compose.yaml`, `Makefile`
 - `dist-dynamic/` directories are gitignored in each plugin's frontend/backend
 - `plugins/**/dist-dynamic/**` excluded from Yarn workspaces to avoid duplicate workspace name errors
@@ -50,6 +50,15 @@
 - Instead we run per-plugin `yarn export-dynamic` from each frontend/backend dir
 - Backend plugins use `--embed-package` for `@aws/aws-core-plugin-for-backstage-common` and `@aws/aws-core-plugin-for-backstage-node`
 - If a plugin has an `export-dynamic` script in package.json, `rhdh-cli plugin package` will use it (honors `--embed-package` flags)
+- Native modules (e.g., `better-sqlite3`) cannot be bundled in dynamic plugins. Options: `--shared-package` (host provides it), `--suppress-native-package` (remove it, but entry point validation fails if code imports it at top level), or refactor to dynamic `import()` so the module is only loaded at runtime
+- `agent-langgraph` uses dynamic `import()` for `@langchain/langgraph-checkpoint-sqlite` to avoid bundling `better-sqlite3` — this is a fork change to upstream code
+
+### Plugin-specific notes
+
+- securityhub backend embeds `@aws/genai-plugin-for-backstage-common` (it imports `DefaultAgentClient`)
+- securityhub had pinned versions (`"0.5.0"`, `"0.1.0"`, `"^0.4.0"`) for workspace deps — fixed to `workspace:^`
+- genai frontend exports `AgentChatPage` (standalone page at `/aws-genai`, not an entity tab)
+- cost-insights frontend is an API provider only (no UI components) — no `pluginConfig` needed
 
 ## Merge Strategy
 

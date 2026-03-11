@@ -29,7 +29,7 @@
     "clean": "backstage-cli package clean",
     "prepack": "backstage-cli package prepack",
     "postpack": "backstage-cli package postpack",
-    "export-dynamic": "rhdh-cli plugin export --embed-package @aws/genai-plugin-for-backstage-common --embed-package @aws/genai-plugin-for-backstage-node",
+    "export-dynamic": "rhdh-cli plugin export --embed-package @aws/genai-plugin-for-backstage-common --embed-package @aws/genai-plugin-for-backstage-node --suppress-native-package better-sqlite3 --suppress-native-package napi-build-utils",
     "export-dynamic:clean": "yarn export-dynamic --clean"
   },
   "dependencies": {
@@ -43,17 +43,14 @@
     "@langchain/core": "0.3.57",
     "@langchain/langgraph": "0.2.74",
     "@langchain/langgraph-checkpoint-postgres": "^0.0.5",
+    "@langchain/langgraph-checkpoint-sqlite": "^0.1.5",
     "@langchain/ollama": "^1.0.0",
     "@langchain/openai": "^0.5.11",
     "langfuse-langchain": "^3.29.1",
     "zod": "^3.23.8"
   },
-  "peerDependencies": {
-    "@langchain/langgraph-checkpoint-sqlite": "^0.1.5"
-  },
   "devDependencies": {
     "@backstage/cli": "^0.35.4",
-    "@langchain/langgraph-checkpoint-sqlite": "^0.1.5",
     "@red-hat-developer-hub/cli": "latest"
   },
   "files": [
