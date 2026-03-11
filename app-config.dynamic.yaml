@@ -5,3 +5,6 @@ scaffolder:
       region: eu-east-1
       organizationName: veecode-saas
 
+# cost insights
+costInsights:
+  engineerCost: 200000
