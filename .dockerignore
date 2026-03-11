@@ -5,4 +5,6 @@ node_modules
 packages/*/src
 packages/*/node_modules
 plugins
+!plugins/*/frontend/dist-dynamic
+!plugins/*/backend/dist-dynamic
 *.local.yaml

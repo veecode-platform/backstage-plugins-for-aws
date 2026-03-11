@@ -32,6 +32,18 @@
 - `make publish` — publish static plugins to npm
 - `make publish-dynamic` — build-dynamic + npm publish from each dist-dynamic/
 
+### OCI image packaging
+
+- `Containerfile.dynamic` — `FROM scratch`, copies each plugin's `dist-dynamic/` into named directories
+- Directory naming: strip `@aws/` prefix, remove `-dynamic` suffix (e.g., `aws-amazon-ecs-plugin-for-backstage-backend`)
+- `.dockerignore` has negation patterns to allow `dist-dynamic/` through: `!plugins/*/frontend/dist-dynamic`, `!plugins/*/backend/dist-dynamic`
+- `make package-oci` — builds dynamic plugins then builds OCI image
+- `make publish-oci` — package-oci + push to `$(IMAGE_REGISTRY)`
+- Override registry for local dev: `make package-oci IMAGE_REGISTRY=localhost:5000`
+- `docker-compose-oci.yaml` — local registry (registry:2) + devportal using OCI plugin references
+- `dynamic-plugins-oci.yaml` — uses `oci://registry:5000/image:tag!package-name` format
+- Tag `pre-oci-packaging` marks the commit before OCI work was added
+
 ### rhdh-cli behavior
 
 - `rhdh-cli plugin package` from root scans ALL workspace packages — not usable in this monorepo (tries to package codebuild, codepipeline, genai, etc.)

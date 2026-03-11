@@ -173,24 +173,50 @@ dynamic plugins for Red Hat Developer Hub / DevPortal.
 
 **New fork-only files:**
 
-- `dynamic-plugins.yaml` — dynamic plugin loading configuration
-- `docker-compose.yaml` — local dev with devportal image
-- `Makefile` — build, export, and publish targets
+- `dynamic-plugins.yaml` — dynamic plugin loading configuration (path-based)
+- `docker-compose.yaml` — local dev with devportal image (path-based)
+- `Makefile` — build, export, publish, and OCI packaging targets
 - `app-config.dynamic.yaml` — app config for dynamic plugin dev
 
 **Merge guidance:** These are fork-only additions. Upstream does not have
 dynamic plugin support. Always keep ours.
 
-### 9. Fork-Only Files
+### 9. OCI Image Packaging
+
+Added OCI image packaging workflow for distributing dynamic plugins as
+container images. Uses a `FROM scratch` Containerfile that copies each
+plugin's `dist-dynamic/` output into named directories.
+
+**New fork-only files:**
+
+- `Containerfile.dynamic` — multi-plugin OCI image (`FROM scratch`)
+- `docker-compose-oci.yaml` — local dev with OCI registry + devportal
+- `dynamic-plugins-oci.yaml` — plugin config using `oci://` references
+
+**Modified files:**
+
+- `.dockerignore` — added negation patterns for `dist-dynamic/` directories
+- `Makefile` — added `package-oci` and `publish-oci` targets
+
+**OCI directory naming convention:** Plugin directories in the image match
+the npm package name without the `@aws/` scope (e.g.,
+`aws-amazon-ecs-plugin-for-backstage-backend`).
+
+**Merge guidance:** Fork-only. Upstream does not have OCI support.
+
+### 10. Fork-Only Files
 
 These files exist only in the fork and should never conflict with upstream:
 
 - `CLAUDE.md` — Claude Code guidance file
 - `.claude/MEMORY.md` — Claude Code project memory
 - `FORK_CHANGES.md` — this file
-- `Makefile` — build/publish automation
-- `docker-compose.yaml` — local dev with devportal
-- `dynamic-plugins.yaml` — dynamic plugin configuration
+- `Makefile` — build/publish/OCI automation
+- `Containerfile.dynamic` — OCI image for dynamic plugins
+- `docker-compose.yaml` — local dev with devportal (path-based)
+- `docker-compose-oci.yaml` — local dev with devportal (OCI-based)
+- `dynamic-plugins.yaml` — dynamic plugin configuration (path-based)
+- `dynamic-plugins-oci.yaml` — dynamic plugin configuration (OCI-based)
 - `app-config.dynamic.yaml` — app config for dynamic plugin dev
 
 **Merge guidance:** Always keep these files. They will not conflict since

@@ -1,0 +1,8 @@
+FROM registry.access.redhat.com/ubi9/ubi-micro:latest AS staging
+COPY plugins/ecs/backend/dist-dynamic  /staging/aws-amazon-ecs-plugin-for-backstage-backend/
+COPY plugins/ecs/frontend/dist-dynamic /staging/aws-amazon-ecs-plugin-for-backstage-frontend/
+COPY plugins/ecr/backend/dist-dynamic  /staging/aws-amazon-ecr-plugin-for-backstage-backend/
+COPY plugins/ecr/frontend/dist-dynamic /staging/aws-amazon-ecr-plugin-for-backstage-frontend/
+
+FROM scratch
+COPY --from=staging /staging/ /

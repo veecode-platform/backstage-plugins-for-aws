@@ -1,0 +1,30 @@
+services:
+  registry:
+    image: registry:2
+    ports:
+      - "5100:5000"
+    volumes:
+      - registry-data:/var/lib/registry
+
+  devportal:
+    image: veecode/devportal:latest
+    depends_on:
+      - registry
+    ports:
+      - "7007:7007"
+    environment:
+      - DEVELOPMENT=true
+      - LOG_LEVEL=info
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_SESSION_TOKEN
+      - AWS_REGION=us-east-1
+    volumes:
+      - ./app-config.dynamic.yaml:/app/app-config.local.yaml:ro
+      - ./dynamic-plugins-oci.yaml:/app/dynamic-plugins.yaml:ro
+      - ./registries.conf:/etc/containers/registries.conf:ro
+      # examples
+      - ./examples:/app/examples:ro
+
+volumes:
+  registry-data:

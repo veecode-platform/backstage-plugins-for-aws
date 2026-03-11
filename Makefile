@@ -8,6 +8,12 @@ VERSION ?= 0.1.0
 NPM_REGISTRY =
 NPM_REGISTRY_ARGS = $(if $(NPM_REGISTRY),--registry $(NPM_REGISTRY))
 
+# OCI image settings
+IMAGE_REGISTRY ?= quay.io/veecode
+IMAGE_NAME ?= backstage-aws-dynamic-plugins
+IMAGE_TAG = $(IMAGE_REGISTRY)/$(IMAGE_NAME):$(VERSION)
+CONTAINER_TOOL ?= docker
+
 # ECS plugin directories
 ECS_FRONTEND_DIR = plugins/ecs/frontend
 ECS_BACKEND_DIR = plugins/ecs/backend
@@ -18,7 +24,7 @@ ECR_BACKEND_DIR = plugins/ecr/backend
 
 ALL_PLUGIN_DIRS = $(ECS_FRONTEND_DIR) $(ECS_BACKEND_DIR) $(ECR_FRONTEND_DIR) $(ECR_BACKEND_DIR)
 
-.PHONY: help build build-dynamic publish publish-dynamic \
+.PHONY: help build build-dynamic package-oci publish publish-dynamic publish-oci \
 	set-version get-version unpublish clean clean-dynamic
 
 help:
@@ -32,6 +38,10 @@ help:
 	@echo "Publish Commands:"
 	@echo "  make publish             - Publish all static plugins to npm"
 	@echo "  make publish-dynamic     - Publish all dynamic plugins to npm"
+	@echo ""
+	@echo "OCI Image Commands:"
+	@echo "  make package-oci         - Build OCI image with dynamic plugins"
+	@echo "  make publish-oci         - Build and push OCI image to registry"
 	@echo ""
 	@echo "Utility Commands:"
 	@echo "  make set-version VERSION=x.y.z - Set version for all packages"
@@ -90,6 +100,15 @@ publish-dynamic: build-dynamic
 	@cd $(ECR_FRONTEND_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
 	@cd $(ECR_BACKEND_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
 
+# Build OCI image with dynamic plugins
+package-oci: build-dynamic
+	$(CONTAINER_TOOL) build -f Containerfile.dynamic -t $(IMAGE_TAG) .
+
+# Build and push OCI image to registry
+publish-oci: package-oci
+	@echo "Pushing $(IMAGE_TAG)..."
+	$(CONTAINER_TOOL) push $(IMAGE_TAG)
+
 # Get latest versions in npm registry
 get-version:
 	@echo "Getting latest versions in npm registry for AWS plugins..."
@@ -129,8 +148,6 @@ clean:
 
 # Clean only dist-dynamic directories
 clean-dynamic:
-	@echo "Cleaning AWS dist-dynamic directories..."
-	@for dir in $(ALL_PLUGIN_DIRS); do \
-		rm -rf $$dir/dist-dynamic; \
-	done
+	@echo "Cleaning dist-dynamic directories..."
+	rm -rf plugins/*/*/dist-dynamic
 	@echo "Cleaned. Run build-dynamic to rebuild."

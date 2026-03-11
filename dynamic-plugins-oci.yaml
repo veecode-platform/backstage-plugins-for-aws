@@ -1,0 +1,43 @@
+includes:
+  - dynamic-plugins.default.yaml
+
+plugins:
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-amazon-ecs-plugin-for-backstage-backend
+    disabled: false
+
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-amazon-ecs-plugin-for-backstage-frontend
+    disabled: false
+    pluginConfig:
+      dynamicPlugins:
+        frontend:
+          aws.amazon-ecs-plugin-for-backstage:
+            entityTabs:
+              - path: /amazon-ecs
+                title: Amazon ECS
+                mountPoint: entity.page.amazon-ecs
+            mountPoints:
+              - mountPoint: entity.page.amazon-ecs/cards
+                importName: EntityAmazonEcsServicesContent
+                config:
+                  layout:
+                    gridColumn: "1 / -1"
+
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-amazon-ecr-plugin-for-backstage-backend
+    disabled: false
+
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-amazon-ecr-plugin-for-backstage-frontend
+    disabled: false
+    pluginConfig:
+      dynamicPlugins:
+        frontend:
+          aws.amazon-ecr-plugin-for-backstage:
+            entityTabs:
+              - path: /amazon-ecr
+                title: Amazon ECR
+                mountPoint: entity.page.amazon-ecr
+            mountPoints:
+              - mountPoint: entity.page.amazon-ecr/cards
+                importName: EntityAmazonEcrImagesContent
+                config:
+                  layout:
+                    gridColumn: "1 / -1"
