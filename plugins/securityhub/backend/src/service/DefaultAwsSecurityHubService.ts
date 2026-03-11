@@ -38,7 +38,6 @@ import {
   HttpAuthService,
   LoggerService,
 } from '@backstage/backend-plugin-api';
-import { createLegacyAuthAdapters } from '@backstage/backend-common';
 
 export class DefaultAwsSecurityHubService implements AwsSecurityHubService {
   public constructor(
@@ -54,7 +53,7 @@ export class DefaultAwsSecurityHubService implements AwsSecurityHubService {
     options: {
       catalogApi: CatalogApi;
       discovery: DiscoveryService;
-      auth?: AuthService;
+      auth: AuthService;
       httpAuth?: HttpAuthService;
       logger: LoggerService;
     },
@@ -117,7 +116,7 @@ export class DefaultAwsSecurityHubService implements AwsSecurityHubService {
         .sdkCredentialProvider;
     }
 
-    const { auth } = createLegacyAuthAdapters(options);
+    const { auth } = options;
 
     const client = new SecurityHubClient({
       region: region,

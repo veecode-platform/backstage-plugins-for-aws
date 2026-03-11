@@ -2648,7 +2648,6 @@ __metadata:
     "@aws/aws-core-plugin-for-backstage-node": "workspace:^"
     "@aws/aws-securityhub-plugin-for-backstage-common": "workspace:^"
     "@aws/genai-plugin-for-backstage-common": "workspace:^"
-    "@backstage/backend-common": "npm:^0.25.0"
     "@backstage/backend-defaults": "npm:^0.15.2"
     "@backstage/backend-plugin-api": "npm:^1.7.0"
     "@backstage/backend-test-utils": "npm:^1.11.0"
