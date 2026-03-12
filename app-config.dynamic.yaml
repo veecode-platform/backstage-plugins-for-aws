@@ -9,6 +9,29 @@ scaffolder:
 costInsights:
   engineerCost: 200000
 
+catalog:
+  providers:
+    awsConfig:
+      default:
+        filters:
+          resourceTypes:
+            - AWS::ECS::Cluster
+            - AWS::ECS::Service
+            - AWS::ECR::Repository
+            - AWS::S3::Bucket
+            - AWS::EC2::VPC
+            - AWS::EKS::Cluster
+        transform:
+          fields:
+            spec:
+              owner:
+                value: guests
+              system:
+                value: examples
+        options:
+          incremental:
+            restLength: { hours: 6 }
+
 genai:
   agents:
     security-hub:

@@ -83,3 +83,6 @@ plugins:
 
   - package: ./dynamic-plugins/dist/aws-genai-plugin-langgraph-agent-for-backstage-dynamic
     disabled: false
+
+  - package: ./dynamic-plugins/dist/aws-config-catalog-module-for-backstage-dynamic
+    disabled: false

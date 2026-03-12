@@ -20,7 +20,7 @@
 
 ## Dynamic Plugins
 
-- ECS, ECR, cost-insights, securityhub, and genai plugins configured for dynamic export via `@red-hat-developer-hub/cli`
+- ECS, ECR, cost-insights, securityhub, genai, and catalog-config plugins configured for dynamic export via `@red-hat-developer-hub/cli`
 - Root files: `dynamic-plugins.yaml`, `docker-compose.yaml`, `Makefile`
 - `dist-dynamic/` directories are gitignored in each plugin's frontend/backend
 - `plugins/**/dist-dynamic/**` excluded from Yarn workspaces to avoid duplicate workspace name errors
@@ -62,6 +62,18 @@
 - genai frontend exports `AgentChatPage` (standalone page at `/aws-genai`, not an entity tab)
 - genai agent-langgraph uses `--suppress-native-package better-sqlite3 --suppress-native-package napi-build-utils` + dynamic `import()` for sqlite checkpoint
 - cost-insights frontend is an API provider only (no UI components) — no `pluginConfig` needed
+- catalog-config (`plugins/core/catalog-config`) embeds `@aws/aws-core-plugin-for-backstage-common`; requires `@backstage/plugin-catalog-backend-module-incremental-ingestion` from host (peerDep)
+- catalog-config is a `backend-plugin-module` for `catalog` plugin (not a standalone backend plugin)
+
+## GenAI Config
+
+- Config root key is `genai` (all lowercase), NOT `genAI`
+- Agent type for langgraph is `langgraph-react`
+- Security Hub finding is a Backstage `action` (not a genai `tool`) — use `actions:` not `tools:` in agent config
+- Required agent config fields: `description` (string), `prompt` (string, singular)
+- Bedrock model config goes under `langgraph.bedrock.modelId` and `langgraph.bedrock.region`
+- `langgraph.messagesMaxTokens` is required
+- For newer Bedrock models, use inference profile IDs (e.g., `us.anthropic.claude-sonnet-4-20250514-v1:0`)
 
 ## Merge Strategy
 

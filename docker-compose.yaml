@@ -27,3 +27,4 @@ services:
       - ./plugins/genai/backend/dist-dynamic:/app/dynamic-plugins/dist/aws-genai-plugin-for-backstage-backend-dynamic:ro
       - ./plugins/genai/frontend/dist-dynamic:/app/dynamic-plugins/dist/aws-genai-plugin-for-backstage-dynamic:ro
       - ./plugins/genai/agent-langgraph/dist-dynamic:/app/dynamic-plugins/dist/aws-genai-plugin-langgraph-agent-for-backstage-dynamic:ro
+      - ./plugins/core/catalog-config/dist-dynamic:/app/dynamic-plugins/dist/aws-config-catalog-module-for-backstage-dynamic:ro

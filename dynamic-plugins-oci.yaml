@@ -83,3 +83,6 @@ plugins:
 
   - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-genai-plugin-langgraph-agent-for-backstage
     disabled: false
+
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-config-catalog-module-for-backstage
+    disabled: false

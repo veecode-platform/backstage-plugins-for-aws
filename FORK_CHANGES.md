@@ -154,7 +154,7 @@ name errors).
 
 **Merge guidance:** Preserve this exclusion after any merge.
 
-### 8. Dynamic Plugin Support (ECS, ECR, Cost Insights, Security Hub, GenAI)
+### 8. Dynamic Plugin Support (ECS, ECR, Cost Insights, Security Hub, GenAI, Catalog Config)
 
 Added `@red-hat-developer-hub/cli` and `export-dynamic` scripts to
 multiple plugin groups, enabling them to be exported as dynamic plugins
@@ -168,11 +168,13 @@ for Red Hat Developer Hub / DevPortal.
 - `plugins/securityhub/frontend/package.json`, `plugins/securityhub/backend/package.json`
 - `plugins/genai/frontend/package.json`, `plugins/genai/backend/package.json`
 - `plugins/genai/agent-langgraph/package.json`
+- `plugins/core/catalog-config/package.json`
 
 **`.gitignore` files created** (all contain `dist-dynamic/`):
 
 - `plugins/{ecs,ecr,cost-insights,securityhub,genai}/{frontend,backend}/.gitignore`
 - `plugins/genai/agent-langgraph/.gitignore`
+- `plugins/core/catalog-config/.gitignore`
 
 **Pinned workspace dependency versions fixed to `workspace:^`:**
 
@@ -263,9 +265,29 @@ which fails in dynamic plugins where the package is renamed with a
 **Merge guidance:** If upstream modifies `McpService.ts`, ensure the
 `package.json` import uses a relative path, not the package name.
 
-### 12. OCI Image Packaging
+### 12. Catalog Config — Dynamic Plugin Export
 
-### 9. OCI Image Packaging
+Added dynamic plugin export support to the AWS Config catalog module
+(`plugins/core/catalog-config`). This is a `backend-plugin-module` for
+the catalog plugin that ingests AWS resources via AWS Config into the
+Backstage catalog using incremental ingestion.
+
+**Affected files:**
+
+- `plugins/core/catalog-config/package.json` — added `export-dynamic` script + `@red-hat-developer-hub/cli` devDep
+- `plugins/core/catalog-config/.gitignore` — added `dist-dynamic/`
+
+**Export flags:** `--embed-package @aws/aws-core-plugin-for-backstage-common`
+
+**Host requirement:** The DevPortal distro must provide
+`@backstage/plugin-catalog-backend-module-incremental-ingestion` as it
+is moved to peerDependencies during export. See
+`veecode-platform/devportal-base#29`.
+
+**Merge guidance:** Fork-only addition. If upstream adds dynamic plugin
+support for this module, compare their approach with ours.
+
+### 13. OCI Image Packaging
 
 Added OCI image packaging workflow for distributing dynamic plugins as
 container images. Uses a `FROM scratch` Containerfile that copies each
@@ -288,7 +310,7 @@ the npm package name without the `@aws/` scope (e.g.,
 
 **Merge guidance:** Fork-only. Upstream does not have OCI support.
 
-### 13. Fork-Only Files
+### 14. Fork-Only Files
 
 These files exist only in the fork and should never conflict with upstream:
 
