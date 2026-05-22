@@ -67,56 +67,66 @@ jobs:
           echo "ahead=$AHEAD" >> "$GITHUB_OUTPUT"
           echo "new_since_last=$NEW_SINCE_LAST" >> "$GITHUB_OUTPUT"
 
-      - name: Build report body
+      - name: Build report body from template
         id: body
+        env:
+          TEMPLATE_PATH: .github/upstream-divergence-template.md
+          LAST: ${{ steps.lastmerge.outputs.sha }}
+          UPSTREAM_TIP: ${{ steps.stats.outputs.upstream_tip }}
+          NEW_SINCE_LAST: ${{ steps.stats.outputs.new_since_last }}
+          BEHIND_TOTAL: ${{ steps.stats.outputs.behind }}
+          AHEAD_TOTAL: ${{ steps.stats.outputs.ahead }}
         run: |
-          LAST="${{ steps.lastmerge.outputs.sha }}"
-          UPSTREAM_TIP="${{ steps.stats.outputs.upstream_tip }}"
+          if [ ! -f "$TEMPLATE_PATH" ]; then
+            echo "Template not found at $TEMPLATE_PATH" >&2
+            exit 1
+          fi
 
-          {
-            echo "_Generated $(date -u +'%Y-%m-%d %H:%M UTC') by \`.github/workflows/upstream-divergence.yml\`._"
-            echo
-            echo "## Summary"
-            echo
-            echo "| Metric | Value |"
-            echo "|---|---|"
-            echo "| Fork point | \`${{ env.FORK_POINT }}\` |"
-            echo "| Last merged upstream tip | \`${LAST}\` |"
-            echo "| Current upstream tip | \`${UPSTREAM_TIP}\` |"
-            echo "| Upstream commits since last merge | ${{ steps.stats.outputs.new_since_last }} |"
-            echo "| Total: commits in upstream/main not on main | ${{ steps.stats.outputs.behind }} |"
-            echo "| Total: commits on main not in upstream/main | ${{ steps.stats.outputs.ahead }} |"
-            echo
-            echo "## Upstream commits since last recorded merge"
-            echo
-            COUNT="${{ steps.stats.outputs.new_since_last }}"
-            if [ "$COUNT" = "0" ]; then
-              echo "_None — fork is caught up to upstream/main._"
-            else
-              echo '```'
-              git log --oneline "${LAST}..upstream/main"
-              echo '```'
-            fi
-            echo
-            echo "## File-level change summary"
-            echo
-            if [ "$COUNT" = "0" ]; then
-              echo "_No file changes to report._"
-            else
-              echo '```'
-              git diff --stat "${LAST}..upstream/main" | tail -n 60
-              echo '```'
-            fi
-            echo
-            echo "## Next steps"
-            echo
-            echo "- Inspect the commits above for any that overlap with open \`FORK_CHANGES.md\` items."
-            echo "- When ready, run the \`merge-upstream\` Claude skill or \`scripts/merge-upstream.sh\` locally."
-            echo "- See \`FORK_PLAN.md\` for the full runbook."
-          } > report.md
+          GENERATED_AT="$(date -u +'%Y-%m-%d %H:%M UTC')"
 
-          # Pass body to next step via file (avoid newline escaping issues).
+          if [ "$NEW_SINCE_LAST" = "0" ]; then
+            COMMIT_LIST_BLOCK="_None — fork is caught up to upstream/main._"
+            DIFFSTAT_BLOCK="_No file changes to report._"
+          else
+            COMMIT_LIST_BLOCK="$(printf '```\n%s\n```' "$(git log --oneline "${LAST}..upstream/main")")"
+            DIFFSTAT_BLOCK="$(printf '```\n%s\n```' "$(git diff --stat "${LAST}..upstream/main" | tail -n 60)")"
+          fi
+
+          # Strip the leading HTML comment (template editing guide) from the
+          # rendered output so it doesn't clutter the issue body.
+          sed '1,/^-->$/d' "$TEMPLATE_PATH" > report.md
+
+          # Substitute placeholders. Use a delimiter that won't appear in
+          # values; awk handles multi-line substitution cleanly.
+          export GENERATED_AT FORK_POINT="${{ env.FORK_POINT }}" LAST UPSTREAM_TIP \
+                 NEW_SINCE_LAST BEHIND_TOTAL AHEAD_TOTAL COMMIT_LIST_BLOCK DIFFSTAT_BLOCK
+          python3 - <<'PY'
+          import os, re, pathlib
+          p = pathlib.Path('report.md')
+          body = p.read_text()
+          mapping = {
+              'GENERATED_AT':     os.environ['GENERATED_AT'],
+              'FORK_POINT':       os.environ['FORK_POINT'],
+              'LAST_MERGED_TIP':  os.environ['LAST'],
+              'UPSTREAM_TIP':     os.environ['UPSTREAM_TIP'],
+              'NEW_SINCE_LAST':   os.environ['NEW_SINCE_LAST'],
+              'BEHIND_TOTAL':     os.environ['BEHIND_TOTAL'],
+              'AHEAD_TOTAL':      os.environ['AHEAD_TOTAL'],
+              'COMMIT_LIST_BLOCK':os.environ['COMMIT_LIST_BLOCK'],
+              'DIFFSTAT_BLOCK':   os.environ['DIFFSTAT_BLOCK'],
+          }
+          for k, v in mapping.items():
+              body = body.replace('{{' + k + '}}', v)
+          left = re.findall(r'\{\{[A-Z_]+\}\}', body)
+          if left:
+              raise SystemExit(f'unsubstituted placeholders: {left}')
+          p.write_text(body)
+          PY
+
           echo "path=report.md" >> "$GITHUB_OUTPUT"
+          # Also emit to the run summary so the report is visible even if
+          # issue creation is skipped or fails.
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upsert pinned issue
         env:
