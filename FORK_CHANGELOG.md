@@ -24,6 +24,29 @@ Refs: FORK_CHANGES.md #N, commits <sha>..<sha>
 
 <!-- New entries go above this line. -->
 
+## 2026-05-22 — OCI build flow improvements
+
+Three related changes that came out of testing `make package-oci`
+end-to-end against the fork's primary deliverable:
+
+- **Single-source the OCI image version.** `Makefile` now reads `VERSION`
+  from root `package.json` via `jq` instead of the previously hardcoded
+  `0.1.0`. Bump the root `package.json` to cut a release.
+- **Auto-sync `dynamic-plugins-oci.yaml`.** After a successful
+  `make package-oci`, the Makefile rewrites `:<tag>` in every
+  `oci://...!<plugin>` reference so DevPortal pulls the image that was
+  just built. Eliminates 12 hand edits per bump.
+- **Fix `.dockerignore` for `agent-langgraph`.** The un-ignore list
+  covered `*/frontend/dist-dynamic`, `*/backend/dist-dynamic`, and
+  `core/catalog-config/dist-dynamic`, but missed
+  `plugins/genai/agent-langgraph/dist-dynamic` (a `backend-plugin-module`
+  living outside those patterns). BuildKit was excluding it from the
+  context, breaking the COPY in `Containerfile.dynamic`. Added the
+  matching negation pattern.
+
+Refs: FORK_CHANGES.md #13 (OCI Image Packaging); commits `38c0873`,
+`1a71054`, `b8ac31d`.
+
 ## 2026-05-22 — Add FORK_ROADMAP.md (dynamic-plugin backlog)
 
 Introduced `FORK_ROADMAP.md` as a fifth fork-bookkeeping file: backlog of
