@@ -116,4 +116,19 @@ cd plugins/ecs/backend && yarn test
 
 ### Releases
 
-Lerna handles versioning with conventional commits. Versions are independent per package. Releases are created on GitHub from the `main` branch.
+The fork releases the **OCI image**, not the npm packages. Two version axes are deliberately kept separate:
+
+- **Per-plugin versions** (`plugins/**/package.json`) are owned by upstream / Lerna. We do **not** bump them and we do **not** publish to npm — these packages live under the `@aws/` scope which is owned by `awslabs`, and renaming the scope would create new recurring conflicts on every upstream merge. The Makefile's `publish` / `publish-dynamic` / `unpublish` / `set-version` targets exist for completeness but are not part of the normal release flow.
+- **OCI image version** is what consumers actually pin. Defined by the root `package.json` `version` field (the only place to bump), and stamped onto the image as `$(IMAGE_REGISTRY)/$(IMAGE_NAME):$(VERSION)` — see `Makefile`. The `VERSION` variable in the Makefile is sourced from root `package.json` via `jq`, so `make package-oci` and `make publish-oci` always tag with the current value. Override at the CLI if needed (`make publish-oci VERSION=0.2.0-rc1`).
+
+DevPortal references an OCI-packaged plugin like this (note: the only version is the image tag — plugin versions are irrelevant once bundled):
+
+```yaml
+plugins:
+  - disabled: false
+    package: oci://quay.io/veecode/backstage-aws-dynamic-plugins:0.1.0!backstage-plugin-aws-amazon-ecs
+```
+
+The `!<plugin-id>` suffix selects which directory inside the image to load (see `Containerfile.dynamic` for the directory layout). Adding a plugin to the image does not require any version change — only a code change to the `Containerfile.dynamic`, `Makefile` `build-dynamic` target, and `dynamic-plugins.yaml`.
+
+To cut a release: bump `version` in root `package.json`, then `make publish-oci`.

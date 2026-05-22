@@ -4,7 +4,9 @@
 # - Supports both static and dynamic plugin builds
 #
 
-VERSION ?= 0.1.0
+# OCI image version. Source of truth is root package.json so there is one
+# place to bump. Override at CLI for ad-hoc tags: `make publish-oci VERSION=0.2.0-rc1`.
+VERSION ?= $(shell jq -r .version package.json)
 NPM_REGISTRY =
 NPM_REGISTRY_ARGS = $(if $(NPM_REGISTRY),--registry $(NPM_REGISTRY))
 
