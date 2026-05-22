@@ -8,10 +8,11 @@ This is a fork from the upstream repo at <https://github.com/awslabs/backstage-p
 
 Upstream `awslabs/backstage-plugins-for-aws` keeps moving (mostly dependency bumps, occasional fixes) and we keep modifying the same files (Backstage upgrade, dynamic-plugin support). Merges therefore conflict on every cycle. The strategy is to make those merges cheap and traceable rather than try to eliminate them.
 
-Four `FORK_*.md` files at the repo root divide the bookkeeping into one job each. Two are **state** (rewritten as facts change), two are **journals** (append-only history):
+Five `FORK_*.md` files at the repo root divide the bookkeeping into one job each. Two are **state** (rewritten as facts change), two are **journals** (append-only history), one is the **backlog**:
 
 - @FORK_CHANGES.md (state) — what is different between fork and upstream **right now**, item by item, with merge guidance per item. Edit when an item is added or retired (e.g. upstream catches up to one of our fixes).
 - @FORK_PLAN.md (state) — the plan and the recurring merge runbook. Edit only when the plan itself changes.
+- @FORK_ROADMAP.md (backlog) — fork-side work that isn't yet done (e.g. plugins still missing a dynamic build) plus parked decisions. Edit when an item lands or a new item appears.
 - @FORK_CHANGELOG.md (journal) — dated entries describing **fork-side** code changes. Append a new entry whenever fork-side code changes. Mirrors per-plugin `CHANGELOG.md` files in role, but kept centrally so we don't fight Lerna on every upstream release.
 - @FORK_MERGES.md (journal) — one entry per `git merge upstream/main`, recording which upstream range we absorbed, how each conflict was resolved, and which `FORK_CHANGES.md` items the merge retired. Row zero (fork point `1b0c194`, 2026-02-07) is immutable and anchors the divergence range.
 
@@ -23,7 +24,7 @@ Do **not** edit any `plugins/**/CHANGELOG.md`. Lerna owns those and rewrites the
 
 ### Tooling that supports the strategy
 
-- `.gitattributes` declares `merge=ours` for `yarn.lock` and all fork-only files (`FORK_*.md`, `CLAUDE.md`, `Makefile`, `Containerfile.dynamic`, `docker-compose*.yaml`, `dynamic-plugins*.yaml`, `app-config.dynamic.yaml`, `OCI.md`, `registries.conf`, `.claude/**`). One-time local setup on a fresh clone: `git config merge.ours.driver true` (the merge script does this for you).
+- `.gitattributes` declares `merge=ours` for `yarn.lock` and all fork-only files (`FORK_*.md` including `FORK_ROADMAP.md`, `CLAUDE.md`, `Makefile`, `Containerfile.dynamic`, `docker-compose*.yaml`, `dynamic-plugins*.yaml`, `app-config.dynamic.yaml`, `OCI.md`, `registries.conf`, `.claude/**`). One-time local setup on a fresh clone: `git config merge.ours.driver true` (the merge script does this for you).
 - `scripts/merge-upstream.sh` runs the merge end-to-end: fetch, list the upstream range since the last `FORK_MERGES.md` entry, merge (auto-resolving via `.gitattributes`), regenerate `yarn.lock`, and print a draft `FORK_MERGES.md` entry. Flags: `--dry-run`, `--report`.
 - `.claude/skills/merge-upstream/SKILL.md` is the project skill that drives the script and walks through any remaining conflicts using the per-item guidance in `FORK_CHANGES.md`. Invoke it when the user asks to "merge upstream" or equivalent.
 - `.github/workflows/upstream-divergence.yml` runs weekly (and on-demand) and posts a divergence report to a pinned issue labeled `upstream-divergence` — ahead/behind counts plus the commit list since the last recorded merge.

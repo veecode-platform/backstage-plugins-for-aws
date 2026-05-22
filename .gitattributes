@@ -13,6 +13,7 @@ FORK_CHANGES.md merge=ours
 FORK_CHANGELOG.md merge=ours
 FORK_MERGES.md merge=ours
 FORK_PLAN.md merge=ours
+FORK_ROADMAP.md merge=ours
 Makefile merge=ours
 Containerfile.dynamic merge=ours
 docker-compose.yaml merge=ours

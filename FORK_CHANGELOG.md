@@ -24,6 +24,21 @@ Refs: FORK_CHANGES.md #N, commits <sha>..<sha>
 
 <!-- New entries go above this line. -->
 
+## 2026-05-22 — Add FORK_ROADMAP.md (dynamic-plugin backlog)
+
+Introduced `FORK_ROADMAP.md` as a fifth fork-bookkeeping file: backlog of
+work not yet done plus parked decisions. Seeded with the dynamic-plugin /
+OCI coverage inventory — Ready (ECS, ECR, Cost Insights, Security Hub,
+GenAI + agent-langgraph, catalog-config) and TODO (CodePipeline,
+CodeBuild, scaffolder-actions). Added `FORK_ROADMAP.md merge=ours` to
+`.gitattributes` and referenced the new file from `CLAUDE.md`'s
+fork-maintenance section.
+
+No code-level changes; the three TODO items will be implemented in
+separate sessions.
+
+Refs: FORK_ROADMAP.md (new), FORK_CHANGES.md #8 (related).
+
 ## 2026-05-22 — Fork maintenance infrastructure + first upstream merge
 
 Two changes in one window:
