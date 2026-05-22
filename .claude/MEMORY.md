@@ -74,6 +74,10 @@
 - `langgraph.messagesMaxTokens` is required
 - For newer Bedrock models, use inference profile IDs (e.g., `us.anthropic.claude-sonnet-4-20250514-v1:0`)
 
+## Tooling Preferences
+
+- Parse JSON with `jq`, YAML with `yq`. Avoid raw `python` / `perl` for parsing or templating in scripts and workflows. **Why:** keeps scripts small and grep-able and avoids introducing a Python runtime dependency where the data structure is the actual subject. **How to apply:** in shell scripts and GitHub Actions YAML, reach for `jq`/`yq`/`sed` first; only use `python` when the logic genuinely needs a real language (multi-step transforms, complex string handling).
+
 ## Merge Strategy
 
 - For `package.json`/`yarn.lock` conflicts: keep higher `@backstage/*` versions, run `yarn install`
