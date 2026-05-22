@@ -1,0 +1,26 @@
+# Setup (one-time, per local clone — git config is not committed):
+#   git config merge.ours.driver true
+# Without this, `merge=ours` below is silently ignored. The merge-upstream
+# script (scripts/merge-upstream.sh) configures it automatically.
+#
+# During upstream merges, always keep our yarn.lock and regenerate it
+# afterwards with `yarn install`. See FORK_PLAN.md (Task 1.1).
+yarn.lock merge=ours
+
+# Fork-only files: always keep our version on merge.
+CLAUDE.md merge=ours
+FORK_CHANGES.md merge=ours
+FORK_CHANGELOG.md merge=ours
+FORK_MERGES.md merge=ours
+FORK_PLAN.md merge=ours
+Makefile merge=ours
+Containerfile.dynamic merge=ours
+docker-compose.yaml merge=ours
+docker-compose-oci.yaml merge=ours
+dynamic-plugins.yaml merge=ours
+dynamic-plugins-oci.yaml merge=ours
+app-config.dynamic.yaml merge=ours
+OCI.md merge=ours
+registries.conf merge=ours
+.gitattributes merge=ours
+.claude/** merge=ours

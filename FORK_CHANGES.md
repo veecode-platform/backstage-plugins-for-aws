@@ -9,7 +9,18 @@ future upstream merges so that fork-specific changes are preserved.
 
 - **Repository:** `https://github.com/awslabs/backstage-plugins-for-aws`
 - **Remote name:** `upstream`
-- **Fork diverged from upstream at:** commit `1b0c194` (2026-03-09)
+- **Fork diverged from upstream at:** commit `1b0c194` (2026-03-09) --> DO NOT CHANGE THIS
+
+## Merge Strategy
+
+When merging upstream changes, follow these steps:
+
+1. Fetch upstream changes: `git fetch upstream`
+2. Create a new branch for the merge: `git checkout -b merge-upstream-<date>`
+3. Merge upstream changes: `git merge upstream/main`
+4. Resolve conflicts carefully, preserving fork-specific changes
+5. Test the merged code thoroughly
+6. Push the merged branch and create a pull request
 
 ## Summary of Fork Changes
 

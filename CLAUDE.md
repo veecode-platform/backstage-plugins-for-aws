@@ -2,6 +2,41 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+This is a fork from the upstream repo at <https://github.com/awslabs/backstage-plugins-for-aws> . This fork adds support for Backstage v1.48.x (or superior), so it deals with breaking changes in the Backstage framework and updates dependencies accordingly. This results in eternal conflicts with the upstream repo.
+
+## Fork maintenance strategy
+
+Upstream `awslabs/backstage-plugins-for-aws` keeps moving (mostly dependency bumps, occasional fixes) and we keep modifying the same files (Backstage upgrade, dynamic-plugin support). Merges therefore conflict on every cycle. The strategy is to make those merges cheap and traceable rather than try to eliminate them.
+
+Four `FORK_*.md` files at the repo root divide the bookkeeping into one job each. Two are **state** (rewritten as facts change), two are **journals** (append-only history):
+
+- @FORK_CHANGES.md (state) — what is different between fork and upstream **right now**, item by item, with merge guidance per item. Edit when an item is added or retired (e.g. upstream catches up to one of our fixes).
+- @FORK_PLAN.md (state) — the plan and the recurring merge runbook. Edit only when the plan itself changes.
+- @FORK_CHANGELOG.md (journal) — dated entries describing **fork-side** code changes. Append a new entry whenever fork-side code changes. Mirrors per-plugin `CHANGELOG.md` files in role, but kept centrally so we don't fight Lerna on every upstream release.
+- @FORK_MERGES.md (journal) — one entry per `git merge upstream/main`, recording which upstream range we absorbed, how each conflict was resolved, and which `FORK_CHANGES.md` items the merge retired. Row zero (fork point `1b0c194`, 2026-02-07) is immutable and anchors the divergence range.
+
+Together these answer three questions a future maintainer (or future Claude) will need: *what is different today* (`FORK_CHANGES.md`), *how did we get here* (`FORK_CHANGELOG.md` + `FORK_MERGES.md`), *how do we merge next* (`FORK_PLAN.md`).
+
+### Per-plugin `CHANGELOG.md` files are off-limits
+
+Do **not** edit any `plugins/**/CHANGELOG.md`. Lerna owns those and rewrites them on every upstream `chore(release): Publish` commit, so any fork edit becomes a guaranteed conflict with no upside (our consumers install via path/OCI, not npm). All fork-side change notes belong in `FORK_CHANGELOG.md`.
+
+### Tooling that supports the strategy
+
+- `.gitattributes` declares `merge=ours` for `yarn.lock` and all fork-only files (`FORK_*.md`, `CLAUDE.md`, `Makefile`, `Containerfile.dynamic`, `docker-compose*.yaml`, `dynamic-plugins*.yaml`, `app-config.dynamic.yaml`, `OCI.md`, `registries.conf`, `.claude/**`). One-time local setup on a fresh clone: `git config merge.ours.driver true` (the merge script does this for you).
+- `scripts/merge-upstream.sh` runs the merge end-to-end: fetch, list the upstream range since the last `FORK_MERGES.md` entry, merge (auto-resolving via `.gitattributes`), regenerate `yarn.lock`, and print a draft `FORK_MERGES.md` entry. Flags: `--dry-run`, `--report`.
+- `.claude/skills/merge-upstream/SKILL.md` is the project skill that drives the script and walks through any remaining conflicts using the per-item guidance in `FORK_CHANGES.md`. Invoke it when the user asks to "merge upstream" or equivalent.
+- `.github/workflows/upstream-divergence.yml` runs weekly (and on-demand) and posts a divergence report to a pinned issue labeled `upstream-divergence` — ahead/behind counts plus the commit list since the last recorded merge.
+
+### When to update which file
+
+| You did this | Update |
+|---|---|
+| Modified fork-side code | `FORK_CHANGELOG.md` (append entry); `FORK_CHANGES.md` (add/edit item if the divergence is durable) |
+| Merged from upstream | `FORK_MERGES.md` (append entry); `FORK_CHANGES.md` (retire items upstream caught up to) |
+| Changed the merge process itself | `FORK_PLAN.md` |
+| Fixed a one-off bug with no divergence implications | Nothing in `FORK_*` files; commit message is enough |
+
 ## Project Overview
 
 Monorepo of Backstage plugins that integrate with AWS services (ECS, ECR, CodePipeline, CodeBuild, Security Hub, Cost Insights, Generative AI). Published under the `@aws` npm scope. Uses Backstage framework v1.48.4.
