@@ -92,36 +92,22 @@ jobs:
             DIFFSTAT_BLOCK="$(printf '```\n%s\n```' "$(git diff --stat "${LAST}..upstream/main" | tail -n 60)")"
           fi
 
-          # Strip the leading HTML comment (template editing guide) from the
-          # rendered output so it doesn't clutter the issue body.
-          sed '1,/^-->$/d' "$TEMPLATE_PATH" > report.md
+          # Strip the leading HTML comment (template editing guide) so the
+          # placeholder docs don't clutter the issue body, then substitute
+          # only the named placeholders with envsubst.
+          export FORK_POINT="${{ env.FORK_POINT }}"
+          export GENERATED_AT LAST_MERGED_TIP="$LAST" UPSTREAM_TIP \
+                 NEW_SINCE_LAST BEHIND_TOTAL AHEAD_TOTAL \
+                 COMMIT_LIST_BLOCK DIFFSTAT_BLOCK
 
-          # Substitute placeholders. Use a delimiter that won't appear in
-          # values; awk handles multi-line substitution cleanly.
-          export GENERATED_AT FORK_POINT="${{ env.FORK_POINT }}" LAST UPSTREAM_TIP \
-                 NEW_SINCE_LAST BEHIND_TOTAL AHEAD_TOTAL COMMIT_LIST_BLOCK DIFFSTAT_BLOCK
-          python3 - <<'PY'
-          import os, re, pathlib
-          p = pathlib.Path('report.md')
-          body = p.read_text()
-          mapping = {
-              'GENERATED_AT':     os.environ['GENERATED_AT'],
-              'FORK_POINT':       os.environ['FORK_POINT'],
-              'LAST_MERGED_TIP':  os.environ['LAST'],
-              'UPSTREAM_TIP':     os.environ['UPSTREAM_TIP'],
-              'NEW_SINCE_LAST':   os.environ['NEW_SINCE_LAST'],
-              'BEHIND_TOTAL':     os.environ['BEHIND_TOTAL'],
-              'AHEAD_TOTAL':      os.environ['AHEAD_TOTAL'],
-              'COMMIT_LIST_BLOCK':os.environ['COMMIT_LIST_BLOCK'],
-              'DIFFSTAT_BLOCK':   os.environ['DIFFSTAT_BLOCK'],
-          }
-          for k, v in mapping.items():
-              body = body.replace('{{' + k + '}}', v)
-          left = re.findall(r'\{\{[A-Z_]+\}\}', body)
-          if left:
-              raise SystemExit(f'unsubstituted placeholders: {left}')
-          p.write_text(body)
-          PY
+          VARS='${GENERATED_AT} ${FORK_POINT} ${LAST_MERGED_TIP} ${UPSTREAM_TIP} ${NEW_SINCE_LAST} ${BEHIND_TOTAL} ${AHEAD_TOTAL} ${COMMIT_LIST_BLOCK} ${DIFFSTAT_BLOCK}'
+
+          sed '1,/^-->$/d' "$TEMPLATE_PATH" | envsubst "$VARS" > report.md
+
+          if grep -qE '\$\{(GENERATED_AT|FORK_POINT|LAST_MERGED_TIP|UPSTREAM_TIP|NEW_SINCE_LAST|BEHIND_TOTAL|AHEAD_TOTAL|COMMIT_LIST_BLOCK|DIFFSTAT_BLOCK)\}' report.md; then
+            echo "Unsubstituted placeholder remains in report.md" >&2
+            exit 1
+          fi
 
           echo "path=report.md" >> "$GITHUB_OUTPUT"
           # Also emit to the run summary so the report is visible even if
