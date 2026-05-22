@@ -47,5 +47,10 @@ The DevPortal container will:
   start fresh, run `docker compose -f docker-compose-oci.yaml down -v`.
 - To use Podman instead of Docker, set `CONTAINER_TOOL=podman` when calling
   make targets.
-- The OCI image tag defaults to `0.1.0`. Override with
+- The OCI image tag defaults to the `version` field in root `package.json`
+  (read by the Makefile via `jq`). Override with
   `make publish-oci IMAGE_REGISTRY=localhost:5100 VERSION=x.y.z`.
+- After a successful `make package-oci` (or `publish-oci`), the Makefile
+  rewrites the `:<tag>` in every `oci://...!<plugin>` reference inside
+  `dynamic-plugins-oci.yaml` so DevPortal pulls the image just built. The
+  resulting YAML diff should be committed alongside the version bump.

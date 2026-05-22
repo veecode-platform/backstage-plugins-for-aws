@@ -142,9 +142,13 @@ publish-dynamic: build-dynamic
 	@cd $(GENAI_AGENT_LANGGRAPH_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
 	@cd $(CATALOG_CONFIG_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
 
-# Build OCI image with dynamic plugins
+# Build OCI image with dynamic plugins. After a successful build, sync the
+# image tag in dynamic-plugins-oci.yaml so DevPortal references match what
+# we just built. Pattern is `backstage-aws-dynamic-plugins:<tag>!<plugin>`.
 package-oci: build-dynamic
 	$(CONTAINER_TOOL) build -f Containerfile.dynamic -t $(IMAGE_TAG) .
+	@sed -i '' 's|\($(IMAGE_NAME):\)[^!]*\(!\)|\1$(VERSION)\2|g' dynamic-plugins-oci.yaml
+	@echo "Synced dynamic-plugins-oci.yaml to $(IMAGE_NAME):$(VERSION)"
 
 # Build and push OCI image to registry
 publish-oci: package-oci

@@ -2,10 +2,10 @@ includes:
   - dynamic-plugins.default.yaml
 
 plugins:
-  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-amazon-ecs-plugin-for-backstage-backend
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:1.0.0!aws-amazon-ecs-plugin-for-backstage-backend
     disabled: false
 
-  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-amazon-ecs-plugin-for-backstage-frontend
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:1.0.0!aws-amazon-ecs-plugin-for-backstage-frontend
     disabled: false
     pluginConfig:
       dynamicPlugins:
@@ -22,10 +22,10 @@ plugins:
                   layout:
                     gridColumn: "1 / -1"
 
-  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-amazon-ecr-plugin-for-backstage-backend
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:1.0.0!aws-amazon-ecr-plugin-for-backstage-backend
     disabled: false
 
-  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-amazon-ecr-plugin-for-backstage-frontend
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:1.0.0!aws-amazon-ecr-plugin-for-backstage-frontend
     disabled: false
     pluginConfig:
       dynamicPlugins:
@@ -42,16 +42,16 @@ plugins:
                   layout:
                     gridColumn: "1 / -1"
 
-  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-cost-insights-plugin-for-backstage-backend
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:1.0.0!aws-cost-insights-plugin-for-backstage-backend
     disabled: false
 
-  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-cost-insights-plugin-for-backstage-frontend
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:1.0.0!aws-cost-insights-plugin-for-backstage-frontend
     disabled: false
 
-  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-securityhub-plugin-for-backstage-backend
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:1.0.0!aws-securityhub-plugin-for-backstage-backend
     disabled: false
 
-  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-securityhub-plugin-for-backstage-frontend
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:1.0.0!aws-securityhub-plugin-for-backstage-frontend
     disabled: false
     pluginConfig:
       dynamicPlugins:
@@ -68,10 +68,10 @@ plugins:
                   layout:
                     gridColumn: "1 / -1"
 
-  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-genai-plugin-for-backstage-backend
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:1.0.0!aws-genai-plugin-for-backstage-backend
     disabled: false
 
-  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-genai-plugin-for-backstage-frontend
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:1.0.0!aws-genai-plugin-for-backstage-frontend
     disabled: false
     pluginConfig:
       dynamicPlugins:
@@ -81,8 +81,8 @@ plugins:
               - path: /aws-genai
                 importName: AgentChatPage
 
-  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-genai-plugin-langgraph-agent-for-backstage
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:1.0.0!aws-genai-plugin-langgraph-agent-for-backstage
     disabled: false
 
-  - package: oci://registry:5000/backstage-aws-dynamic-plugins:0.1.0!aws-config-catalog-module-for-backstage
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:1.0.0!aws-config-catalog-module-for-backstage
     disabled: false
