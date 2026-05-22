@@ -17,7 +17,6 @@ import {
   SecurityHubClient,
   MapFilterComparison,
 } from '@aws-sdk/client-securityhub';
-import { CatalogApi } from '@backstage/catalog-client';
 import {
   getOneOfEntityAnnotations,
   AWS_SDK_CUSTOM_USER_AGENT,
@@ -34,16 +33,15 @@ import { Config } from '@backstage/config';
 import {
   AuthService,
   BackstageCredentials,
-  DiscoveryService,
-  HttpAuthService,
   LoggerService,
 } from '@backstage/backend-plugin-api';
+import { CatalogService } from '@backstage/plugin-catalog-node';
 
 export class DefaultAwsSecurityHubService implements AwsSecurityHubService {
   public constructor(
     private readonly logger: LoggerService,
     private readonly auth: AuthService,
-    private readonly catalogApi: CatalogApi,
+    private readonly catalogApi: CatalogService,
     private readonly client: SecurityHubClient,
     private readonly customFilters?: any,
   ) {}
@@ -51,10 +49,8 @@ export class DefaultAwsSecurityHubService implements AwsSecurityHubService {
   static async fromConfig(
     config: Config,
     options: {
-      catalogApi: CatalogApi;
-      discovery: DiscoveryService;
+      catalogApi: CatalogService;
       auth: AuthService;
-      httpAuth?: HttpAuthService;
       logger: LoggerService;
     },
   ) {
@@ -116,8 +112,6 @@ export class DefaultAwsSecurityHubService implements AwsSecurityHubService {
         .sdkCredentialProvider;
     }
 
-    const { auth } = options;
-
     const client = new SecurityHubClient({
       region: region,
       customUserAgent: AWS_SDK_CUSTOM_USER_AGENT,
@@ -126,7 +120,7 @@ export class DefaultAwsSecurityHubService implements AwsSecurityHubService {
 
     return new DefaultAwsSecurityHubService(
       options.logger,
-      auth,
+      options.auth,
       options.catalogApi,
       client,
       customFilters,
@@ -139,14 +133,9 @@ export class DefaultAwsSecurityHubService implements AwsSecurityHubService {
   }): Promise<AwsSecurityFinding[]> {
     this.logger.debug(`Fetch SecurityHub findings for ${options.entityRef}`);
 
-    const entity = await this.catalogApi.getEntityByRef(
-      options.entityRef,
-      options.credentials &&
-        (await this.auth.getPluginRequestToken({
-          onBehalfOf: options.credentials,
-          targetPluginId: 'catalog',
-        })),
-    );
+    const entity = await this.catalogApi.getEntityByRef(options.entityRef, {
+      credentials: await this.auth.getOwnServiceCredentials(),
+    });
 
     if (!entity) {
       throw new Error(
