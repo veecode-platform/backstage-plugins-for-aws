@@ -63,7 +63,7 @@ last_merged_upstream_sha() {
   # Look for "Upstream tip merged: <short>" in the newest non-row-zero entry
   # of FORK_MERGES.md. Falls back to the fork point if no merges yet.
   local sha
-  sha="$(grep -m1 -oE 'Upstream tip merged: \`?[0-9a-f]{7,40}\`?' FORK_MERGES.md 2>/dev/null \
+  sha="$(grep -m1 -oE 'Upstream tip merged: `?[0-9a-f]{7,40}`?' FORK_MERGES.md 2>/dev/null \
         | head -n1 \
         | grep -oE '[0-9a-f]{7,40}' || true)"
   if [ -z "$sha" ]; then
