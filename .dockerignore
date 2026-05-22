@@ -8,4 +8,5 @@ plugins
 !plugins/*/frontend/dist-dynamic
 !plugins/*/backend/dist-dynamic
 !plugins/core/catalog-config/dist-dynamic
+!plugins/genai/agent-langgraph/dist-dynamic
 *.local.yaml
