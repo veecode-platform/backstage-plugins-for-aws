@@ -24,6 +24,30 @@ Refs: FORK_CHANGES.md #N, commits <sha>..<sha>
 
 <!-- New entries go above this line. -->
 
+## 2026-05-22 — Fork maintenance infrastructure + first upstream merge
+
+Two changes in one window:
+
+- **Fork maintenance infrastructure** (commit `65fd61a`): introduced the
+  four-file scheme (`FORK_CHANGES.md`, `FORK_CHANGELOG.md`,
+  `FORK_MERGES.md`, `FORK_PLAN.md`); added `.gitattributes` with
+  `merge=ours` for `yarn.lock` and all fork-only files; added
+  `scripts/merge-upstream.sh`, the `merge-upstream` Claude skill, and a
+  weekly `.github/workflows/upstream-divergence.yml` report.
+- **First upstream merge since fork** (merge commit `63b60aa`, journal
+  commit `c268d6e`): absorbed 24 upstream commits in range
+  `1b0c194..7b8aa4a`. Adopted upstream PR #560's `@backstage/backend-common`
+  removal across all `package.json` files; accepted upstream's cleaner
+  `securityhub/backend` TS implementation (which also migrated
+  `catalogApi: CatalogApi` → `CatalogService` from
+  `@backstage/plugin-catalog-node`); absorbed upstream PR #580's ECR
+  config-key fix (`maxImages` → `aws.ecr.maxImages`). Retired
+  `FORK_CHANGES.md` item #9. Deferred adopting upstream's new
+  `@backstage/ui` dep in `packages/app/package.json` to a future round.
+
+Refs: FORK_CHANGES.md #9 (retired); FORK_MERGES.md 2026-05-22 entry;
+commits `65fd61a`, `63b60aa`, `c268d6e`.
+
 ## 2026-03-12 — Dynamic plugin support for catalog-config module
 
 Added `export-dynamic` script and `@red-hat-developer-hub/cli` devDep to
