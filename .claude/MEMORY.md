@@ -81,3 +81,12 @@
 - For scaffolder schemas: always use `z => z.object()` function wrapper format
 - For `module.ts`: import from `@backstage/plugin-scaffolder-node`, not `/alpha`
 - For fork-only files: always keep ours
+- The full runbook + tooling: `FORK_PLAN.md`, `scripts/merge-upstream.sh`, project skill `.claude/skills/merge-upstream/`. `.gitattributes` auto-resolves `yarn.lock` and fork-only files via `merge=ours` (one-time local setup: `git config merge.ours.driver true`).
+- Preference: absorb recurring upstream conflicts rather than restructure fork-side code to avoid them. The fork's value is fork-side features; restructuring hides where divergence lives. Known tolerated conflicts: per-plugin `package.json` `export-dynamic` scripts and rhdh-cli devDep entries.
+
+## Upstream Divergence Dashboard
+
+- GitHub issue [#1](https://github.com/veecode-platform/backstage-plugins-for-aws/issues/1) is the pinned, always-open divergence dashboard — do not close it as housekeeping.
+- Refreshed weekly + on `workflow_dispatch` by `.github/workflows/upstream-divergence.yml`. Body is upserted in place, not appended.
+- Layout lives in `.github/upstream-divergence-template.md` (uses `{{placeholder}}` tokens). Edit the template to change the report — the workflow has no inline formatting.
+- Trigger on demand: `gh workflow run upstream-divergence.yml --repo veecode-platform/backstage-plugins-for-aws`.
