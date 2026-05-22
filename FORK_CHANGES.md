@@ -203,30 +203,14 @@ for Red Hat Developer Hub / DevPortal.
 devDep, and `.gitignore` files are fork-only additions. The `workspace:^`
 fixes should be accepted by upstream or reapplied after merge.
 
-### 9. Security Hub — Remove @backstage/backend-common
+### 9. ~~Security Hub — Remove @backstage/backend-common~~ — RETIRED 2026-05-22
 
-Replaced `createLegacyAuthAdapters` from the deprecated
-`@backstage/backend-common` package with direct usage of `auth` and
-`httpAuth` services from `@backstage/backend-plugin-api`. Removed the
-`@backstage/backend-common` dependency entirely.
-
-**Affected files:**
-
-- `plugins/securityhub/backend/src/service/router.ts`
-- `plugins/securityhub/backend/src/service/DefaultAwsSecurityHubService.ts`
-- `plugins/securityhub/backend/package.json`
-
-**What changed:**
-
-```diff
--import { createLegacyAuthAdapters } from '@backstage/backend-common';
--const { httpAuth } = createLegacyAuthAdapters(options);
-+const { httpAuth } = options;
-```
-
-**Merge guidance:** If upstream removes `@backstage/backend-common` usage
-themselves, accept upstream's version. If upstream still uses it, this fix
-must be reapplied since dynamic plugins cannot load `@backstage/backend-common`.
+Retired by upstream PR #560 (commit `adaccae`, merged into the fork on
+2026-05-22 as part of merge `63b60aa`). Upstream removed
+`@backstage/backend-common` across the repo with the same intent as our
+fork-side change. We accepted upstream's `securityhub/backend` TS files
+verbatim during the merge; no fork-side carry-over remains. See
+`FORK_MERGES.md` entry for 2026-05-22.
 
 ### 10. GenAI — Dynamic Import for SQLite Checkpoint
 

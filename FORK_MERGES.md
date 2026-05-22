@@ -26,6 +26,21 @@ Entry schema:
 
 <!-- New entries go above this line. -->
 
+## 2026-05-22 — `63b60aa`
+
+- Upstream tip merged: `7b8aa4a` ("chore(release): Publish")
+- Range absorbed: `1b0c194..7b8aa4a` (24 commits — first merge since fork)
+- Conflicts resolved:
+  - 11 × `**/package.json`: **ours** — kept higher `@backstage/*` versions for Backstage 1.48.4. Dropped `@backstage/backend-common` dep where it lingered (upstream's intent in #560).
+  - `plugins/securityhub/backend/src/service/router.ts`: **upstream** — implements our #9 intent more cleanly (full destructure, `httpAuth` non-optional).
+  - `plugins/securityhub/backend/src/service/DefaultAwsSecurityHubService.ts`: **upstream** — modernizes `catalogApi: CatalogApi` → `CatalogService` from `@backstage/plugin-catalog-node`, drops `httpAuth` from `fromConfig` options.
+- FORK_CHANGES entries retired: **#9** (Security Hub — Remove `@backstage/backend-common`). Upstream PR #560 supersedes.
+- FORK_CHANGES entries added: none.
+- Post-merge checks: `yarn install` ok / `yarn tsc` clean / `yarn test` 28 projects passing.
+- Notes:
+  - `packages/app/package.json`: kept ours; **deferred** adopting upstream's added `@backstage/ui": "^0.14.3"` line (upstream `14a7217`). Likely safe to add later but not validated this round.
+  - `plugins/ecr/backend/src/config/config.ts` absorbed upstream's #580 fix (`maxImages` → `aws.ecr.maxImages`) cleanly with no conflict — that's a behavior-affecting config-key change worth flagging to downstream consumers.
+
 ## Row zero — fork point (do not edit)
 
 - Forked from upstream commit: `1b0c194` (2026-02-07)
