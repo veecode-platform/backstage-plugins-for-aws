@@ -121,6 +121,7 @@ jobs:
       - name: Upsert pinned issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           set -e
           BODY_FILE="${{ steps.body.outputs.path }}"
