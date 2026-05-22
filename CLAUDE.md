@@ -41,8 +41,9 @@ Do **not** edit any `plugins/**/CHANGELOG.md`. Lerna owns those and rewrites the
 
 | You did this | Update |
 |---|---|
-| Modified fork-side code | `FORK_CHANGELOG.md` (append entry); `FORK_CHANGES.md` (add/edit item if the divergence is durable) |
-| Merged from upstream | `FORK_MERGES.md` (append entry); `FORK_CHANGES.md` (retire items upstream caught up to) |
+| Modified fork-side code | `FORK_CHANGELOG.md` (append entry); `FORK_CHANGES.md` (add/edit item if the divergence is durable); `FORK_ROADMAP.md` (move the item from TODO to Ready, or delete it, if it satisfies a roadmap entry) |
+| Merged from upstream | `FORK_MERGES.md` (append entry); `FORK_CHANGES.md` (retire items upstream caught up to); `FORK_ROADMAP.md` (delete or retire items upstream caught up to) |
+| Added a new backlog item or parked decision | `FORK_ROADMAP.md` |
 | Changed the merge process itself | `FORK_PLAN.md` |
 | Fixed a one-off bug with no divergence implications | Nothing in `FORK_*` files; commit message is enough |
 
