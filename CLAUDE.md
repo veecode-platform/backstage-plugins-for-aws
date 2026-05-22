@@ -4,6 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a fork from the upstream repo at <https://github.com/awslabs/backstage-plugins-for-aws> . This fork adds support for Backstage v1.48.x (or superior), so it deals with breaking changes in the Backstage framework and updates dependencies accordingly. This results in eternal conflicts with the upstream repo.
 
+## Primary objective
+
+**The deliverable of this fork is the OCI image** at `quay.io/veecode/backstage-aws-dynamic-plugins` — a `FROM scratch` bundle of every AWS plugin built as a dynamic plugin, consumable by VeeCode DevPortal via `oci://` references in its `dynamic-plugins.yaml`. Everything else (the Backstage 1.48 upgrade, the `export-dynamic` wiring on each plugin, the npm `peerDependencies` fixes, the path-based dev workflow) exists to make that image build, load, and run correctly inside DevPortal.
+
+When prioritizing work, ask: *does this get more plugins into the OCI image, or keep the existing ones loading cleanly in DevPortal?* If neither, it's secondary. See `FORK_ROADMAP.md` for the OCI coverage inventory.
+
+The static hostapp under `packages/app` + `packages/backend` is a **development testbed**, not a product — it exists so we can iterate on plugin code with `yarn start` before exporting to dynamic and rebuilding the image.
+
 ## Fork maintenance strategy
 
 Upstream `awslabs/backstage-plugins-for-aws` keeps moving (mostly dependency bumps, occasional fixes) and we keep modifying the same files (Backstage upgrade, dynamic-plugin support). Merges therefore conflict on every cycle. The strategy is to make those merges cheap and traceable rather than try to eliminate them.

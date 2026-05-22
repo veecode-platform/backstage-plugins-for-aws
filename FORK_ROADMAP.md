@@ -6,6 +6,11 @@ record state (`FORK_CHANGES.md`), history (`FORK_CHANGELOG.md`,
 **inventory of intent**: what's still missing, what's parked, and what's
 explicitly out of scope.
 
+The fork's deliverable is the **OCI image**
+(`quay.io/veecode/backstage-aws-dynamic-plugins`) consumed by VeeCode
+DevPortal. The TODO list below is therefore essentially "plugins not yet
+in the image". See `CLAUDE.md` → *Primary objective*.
+
 Update when an item lands (move it to `FORK_CHANGELOG.md` and delete it
 here) or when a new item appears.
 

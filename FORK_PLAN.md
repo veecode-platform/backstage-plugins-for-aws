@@ -3,9 +3,16 @@
 How we keep this fork sustainable across upstream merges. Split into setup
 work (one-time) and a per-merge runbook (recurring).
 
+The fork exists to ship the **OCI image**
+(`quay.io/veecode/backstage-aws-dynamic-plugins`) to VeeCode DevPortal —
+every other concern here (merges, conflict policy, lock-file strategy)
+serves keeping that image buildable and current. See `CLAUDE.md` →
+*Primary objective*.
+
 Related files:
 
 - `FORK_CHANGES.md` — current state of divergence (reference).
+- `FORK_ROADMAP.md` — backlog (plugins not yet in the OCI image, etc.).
 - `FORK_CHANGELOG.md` — journal of fork-side changes (append-only).
 - `FORK_MERGES.md` — log of upstream→fork merges (append-only).
 
