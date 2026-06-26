@@ -73,7 +73,7 @@ help:
 set-version:
 	@echo "Setting AWS packages to version $(VERSION)..."
 	@for dir in $(ALL_PLUGIN_DIRS); do \
-		sed -i '' 's/"version": "[^"]*"/"version": "$(VERSION)"/' $$dir/package.json; \
+		sed -i.bak 's/"version": "[^"]*"/"version": "$(VERSION)"/' $$dir/package.json && rm -f $$dir/package.json.bak; \
 		echo "  Updated $$dir"; \
 	done
 	@echo "All packages updated to version $(VERSION)"
@@ -147,7 +147,7 @@ publish-dynamic: build-dynamic
 # we just built. Pattern is `backstage-aws-dynamic-plugins:<tag>!<plugin>`.
 package-oci: build-dynamic
 	$(CONTAINER_TOOL) build -f Containerfile.dynamic -t $(IMAGE_TAG) .
-	@sed -i '' 's|\($(IMAGE_NAME):\)[^!]*\(!\)|\1$(VERSION)\2|g' dynamic-plugins-oci.yaml
+	@sed -i.bak 's|\($(IMAGE_NAME):\)[^!]*\(!\)|\1$(VERSION)\2|g' dynamic-plugins-oci.yaml && rm -f dynamic-plugins-oci.yaml.bak
 	@echo "Synced dynamic-plugins-oci.yaml to $(IMAGE_NAME):$(VERSION)"
 
 # Build and push OCI image to registry
