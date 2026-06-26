@@ -44,32 +44,36 @@ jobs:
           username: ${{ secrets.QUAY_USER }}
           password: ${{ secrets.QUAY_TOKEN }}
 
-      # Born public: create the repository already public BEFORE the first push,
-      # so it never exists as private. Idempotent — if it already exists, Quay
-      # returns 400 and the post-push step below enforces public visibility.
-      - name: Ensure repository exists and is public
+      # Born public: guarantee the repo is public WITHOUT a private phase.
+      # If it is already public (Quay repos are world-readable), no API token is
+      # needed at all. The OAuth API token is only required to create a brand-new
+      # repo as public, or to flip an existing private one.
+      - name: Ensure repository is public
+        id: vis
         env:
           QUAY_API_TOKEN: ${{ secrets.QUAY_API_TOKEN }}
         run: |
+          status=$(curl -s -o /tmp/repo.json -w "%{http_code}" \
+            "https://quay.io/api/v1/repository/${IMAGE_NAMESPACE}/${IMAGE_NAME}?includeTags=false")
+          if [ "$status" = "200" ] && [ "$(jq -r '.is_public' /tmp/repo.json)" = "true" ]; then
+            echo "Repository already public — no API management needed."
+            echo "needs_enforce=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           if [ -z "$QUAY_API_TOKEN" ]; then
-            echo "::error::QUAY_API_TOKEN not set — cannot guarantee public visibility"
+            echo "::error::Repo is not public and QUAY_API_TOKEN is missing/invalid. Provide an OAuth application token (scopes: repo:create, repo:admin)."
             exit 1
           fi
-          echo -n "Creating ${IMAGE_NAMESPACE}/${IMAGE_NAME} as public... "
-          status=$(curl -s -o /tmp/create.out -w "%{http_code}" -X POST \
-            -H "Authorization: Bearer ${QUAY_API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d "{\"namespace\":\"${IMAGE_NAMESPACE}\",\"repository\":\"${IMAGE_NAME}\",\"visibility\":\"public\",\"repo_kind\":\"image\",\"description\":\"VeeCode AWS dynamic plugins for Backstage / DevPortal\"}" \
-            "https://quay.io/api/v1/repository")
-          if [ "$status" = "201" ] || [ "$status" = "200" ]; then
-            echo "created public."
-          elif [ "$status" = "400" ]; then
-            echo "already exists (will enforce public after push)."
-          else
-            echo "unexpected HTTP ${status}:"
-            cat /tmp/create.out
-            exit 1
+          if [ "$status" = "404" ]; then
+            echo -n "Creating ${IMAGE_NAMESPACE}/${IMAGE_NAME} as public... "
+            c=$(curl -s -o /tmp/create.out -w "%{http_code}" -X POST \
+              -H "Authorization: Bearer ${QUAY_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "{\"namespace\":\"${IMAGE_NAMESPACE}\",\"repository\":\"${IMAGE_NAME}\",\"visibility\":\"public\",\"repo_kind\":\"image\",\"description\":\"VeeCode AWS dynamic plugins for Backstage / DevPortal\"}" \
+              "https://quay.io/api/v1/repository")
+            if [ "$c" = "201" ] || [ "$c" = "200" ]; then echo "created."; else echo "FAILED (HTTP ${c}):"; cat /tmp/create.out; exit 1; fi
           fi
+          echo "needs_enforce=true" >> "$GITHUB_OUTPUT"
 
       - name: Build and push OCI image
         env:
@@ -78,9 +82,10 @@ jobs:
         run: |
           make publish-oci CONTAINER_TOOL=podman VERSION="$VERSION"
 
-      # Enforce public even if the repo pre-existed as private. No
-      # intentionally-private phase — this only re-asserts the public state.
+      # Only runs when the repo was newly created or was private — never for an
+      # already-public repo. Re-asserts public after the push completes.
       - name: Enforce public visibility
+        if: steps.vis.outputs.needs_enforce == 'true'
         env:
           QUAY_API_TOKEN: ${{ secrets.QUAY_API_TOKEN }}
         run: |
