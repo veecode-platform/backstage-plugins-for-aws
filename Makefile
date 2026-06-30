@@ -40,7 +40,10 @@ GENAI_AGENT_LANGGRAPH_DIR = plugins/genai/agent-langgraph
 # Catalog Config module directory
 CATALOG_CONFIG_DIR = plugins/core/catalog-config
 
-ALL_PLUGIN_DIRS = $(ECS_FRONTEND_DIR) $(ECS_BACKEND_DIR) $(ECR_FRONTEND_DIR) $(ECR_BACKEND_DIR) $(COST_INSIGHTS_FRONTEND_DIR) $(COST_INSIGHTS_BACKEND_DIR) $(SECURITYHUB_FRONTEND_DIR) $(SECURITYHUB_BACKEND_DIR) $(GENAI_FRONTEND_DIR) $(GENAI_BACKEND_DIR) $(GENAI_AGENT_LANGGRAPH_DIR) $(CATALOG_CONFIG_DIR)
+# Catalog S3 module directory (awsS3 provider wrapper)
+CATALOG_S3_DIR = plugins/core/catalog-aws-s3
+
+ALL_PLUGIN_DIRS = $(ECS_FRONTEND_DIR) $(ECS_BACKEND_DIR) $(ECR_FRONTEND_DIR) $(ECR_BACKEND_DIR) $(COST_INSIGHTS_FRONTEND_DIR) $(COST_INSIGHTS_BACKEND_DIR) $(SECURITYHUB_FRONTEND_DIR) $(SECURITYHUB_BACKEND_DIR) $(GENAI_FRONTEND_DIR) $(GENAI_BACKEND_DIR) $(GENAI_AGENT_LANGGRAPH_DIR) $(CATALOG_CONFIG_DIR) $(CATALOG_S3_DIR)
 
 .PHONY: help build build-dynamic package-oci publish publish-dynamic publish-oci \
 	set-version get-version unpublish clean clean-dynamic
@@ -97,6 +100,7 @@ build-dynamic: build
 	cd $(GENAI_BACKEND_DIR) && yarn export-dynamic
 	cd $(GENAI_AGENT_LANGGRAPH_DIR) && yarn export-dynamic
 	cd $(CATALOG_CONFIG_DIR) && yarn export-dynamic
+	cd $(CATALOG_S3_DIR) && yarn export-dynamic
 
 # Helper: publish a single plugin if not already published
 define publish_plugin
@@ -125,6 +129,7 @@ publish: build
 	$(call publish_plugin,$(GENAI_BACKEND_DIR))
 	$(call publish_plugin,$(GENAI_AGENT_LANGGRAPH_DIR))
 	$(call publish_plugin,$(CATALOG_CONFIG_DIR))
+	$(call publish_plugin,$(CATALOG_S3_DIR))
 
 # Publish all dynamic plugins to npm
 publish-dynamic: build-dynamic
@@ -141,6 +146,7 @@ publish-dynamic: build-dynamic
 	@cd $(GENAI_BACKEND_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
 	@cd $(GENAI_AGENT_LANGGRAPH_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
 	@cd $(CATALOG_CONFIG_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
+	@cd $(CATALOG_S3_DIR)/dist-dynamic && npm publish $(NPM_REGISTRY_ARGS) || true
 
 # Build OCI image with dynamic plugins. After a successful build, sync the
 # image tag in dynamic-plugins-oci.yaml so DevPortal references match what

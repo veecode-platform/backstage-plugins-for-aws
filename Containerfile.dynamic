@@ -11,6 +11,7 @@ COPY plugins/genai/backend/dist-dynamic         /staging/aws-genai-plugin-for-ba
 COPY plugins/genai/frontend/dist-dynamic        /staging/aws-genai-plugin-for-backstage-frontend/
 COPY plugins/genai/agent-langgraph/dist-dynamic /staging/aws-genai-plugin-langgraph-agent-for-backstage/
 COPY plugins/core/catalog-config/dist-dynamic   /staging/aws-config-catalog-module-for-backstage/
+COPY plugins/core/catalog-aws-s3/dist-dynamic   /staging/aws-s3-catalog-module-for-backstage/
 
 FROM scratch
 COPY --from=staging /staging/ /

@@ -86,3 +86,6 @@ plugins:
 
   - package: oci://registry:5000/backstage-aws-dynamic-plugins:1.0.0!aws-config-catalog-module-for-backstage
     disabled: false
+
+  - package: oci://registry:5000/backstage-aws-dynamic-plugins:1.0.0!aws-s3-catalog-module-for-backstage
+    disabled: false
