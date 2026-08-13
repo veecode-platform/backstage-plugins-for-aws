@@ -29,7 +29,7 @@
     "clean": "backstage-cli package clean",
     "prepack": "backstage-cli package prepack",
     "postpack": "backstage-cli package postpack",
-    "export-dynamic": "rhdh-cli plugin export --embed-package @aws/aws-core-plugin-for-backstage-common",
+    "export-dynamic": "rhdh-cli plugin export --embed-package @aws/aws-core-plugin-for-backstage-common --shared-package '!@backstage/plugin-catalog-backend-module-incremental-ingestion'",
     "export-dynamic:clean": "yarn export-dynamic --clean"
   },
   "dependencies": {
