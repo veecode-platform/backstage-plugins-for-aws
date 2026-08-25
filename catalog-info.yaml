@@ -1,13 +1,18 @@
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: backstage
-  description: An example of a Backstage application.
-  # Example for optional annotations
-  # annotations:
-  #   github.com/project-slug: backstage/backstage
-  #   backstage.io/techdocs-ref: dir:.
+  name: backstage-plugins-for-aws
+  description: Fork of awslabs/backstage-plugins-for-aws. Publishes its own bundled dynamic-plugins image (backstage-aws-dynamic-plugins) to quay.io/veecode — a parallel path to the export-overlays pipeline.
+  annotations:
+    github.com/project-slug: veecode-platform/backstage-plugins-for-aws
+  tags: [fork, aws, plugins]
+  links:
+    - url: https://github.com/awslabs/backstage-plugins-for-aws
+      title: "Upstream: awslabs/backstage-plugins-for-aws"
 spec:
-  type: website
-  owner: john@example.com
-  lifecycle: experimental
+  type: library
+  lifecycle: production
+  owner: group:default/veecode-platform
+  system: veecode-devportal
+  dependsOn:
+    - resource:default/quay-veecode
