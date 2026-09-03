@@ -155,7 +155,7 @@ export const GlobalClusterCostCard: React.FC = () => {
                 {t('globalCluster.totalClusterDaily')}
               </Typography>
               <Typography variant="h5" style={{ fontWeight: 700, color: '#1976d2' }}>
-                ${totals.daily.toFixed(4)}/dia
+                ${totals.daily.toFixed(2)}{t('globalCluster.perDay')}
               </Typography>
             </div>
             <Divider orientation="vertical" flexItem />
@@ -164,7 +164,7 @@ export const GlobalClusterCostCard: React.FC = () => {
                 {t('globalCluster.totalClusterMonthly')}
               </Typography>
               <Typography variant="h5" style={{ fontWeight: 700 }}>
-                ${totals.monthly.toFixed(2)}/mês
+                ${totals.monthly.toFixed(2)}{t('globalCluster.perMonth')}
               </Typography>
             </div>
             <Divider orientation="vertical" flexItem />
@@ -216,10 +216,10 @@ export const GlobalClusterCostCard: React.FC = () => {
                         )}
                       </Box>
                     </TableCell>
-                    <TableCell align="right">${row.cpuCost.toFixed(4)}</TableCell>
-                    <TableCell align="right">${row.ramCost.toFixed(4)}</TableCell>
+                    <TableCell align="right">${row.cpuCost.toFixed(2)}</TableCell>
+                    <TableCell align="right">${row.ramCost.toFixed(2)}</TableCell>
                     <TableCell align="right">
-                      <strong>${row.totalCost.toFixed(4)}</strong>
+                      <strong>${row.totalCost.toFixed(2)}</strong>
                     </TableCell>
                     <TableCell align="right">${row.monthlyProjection.toFixed(2)}</TableCell>
                     <TableCell align="right">

@@ -44,6 +44,8 @@ export const costInsightsMessages = {
     totalClusterDaily: 'Daily In-Cluster Spend',
     totalClusterMonthly: 'Monthly In-Cluster Projection',
     efficiencyAvg: 'Cluster Efficiency Avg',
+    perDay: '/day',
+    perMonth: '/mo',
   },
   periodSelect: {
     past30Days: 'Past 30 Days',

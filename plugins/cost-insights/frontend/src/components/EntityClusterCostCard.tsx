@@ -124,9 +124,9 @@ export const EntityClusterCostCard = () => {
                 <TableBody>
                   <TableRow hover>
                     <TableCell>{clusterCost.name || clusterCost.properties?.namespace}</TableCell>
-                    <TableCell align="right">${(clusterCost.cpuCost || 0).toFixed(4)}</TableCell>
-                    <TableCell align="right">${(clusterCost.ramCost || 0).toFixed(4)}</TableCell>
-                    <TableCell align="right"><strong>${(clusterCost.totalCost || 0).toFixed(4)}</strong></TableCell>
+                    <TableCell align="right">${(clusterCost.cpuCost || 0).toFixed(2)}</TableCell>
+                    <TableCell align="right">${(clusterCost.ramCost || 0).toFixed(2)}</TableCell>
+                    <TableCell align="right"><strong>${(clusterCost.totalCost || 0).toFixed(2)}</strong></TableCell>
                     <TableCell align="right">${((clusterCost.totalCost || 0) * 30).toFixed(2)}</TableCell>
                     <TableCell align="right">
                       <Box display="flex" alignItems="center" justifyContent="flex-end">

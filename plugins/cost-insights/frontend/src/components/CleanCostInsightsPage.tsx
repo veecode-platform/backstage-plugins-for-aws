@@ -259,11 +259,11 @@ export const CleanCostInsightsPage = () => {
                       <YAxis
                         tickLine={false}
                         tick={{ fill: '#888', fontSize: 12 }}
-                        tickFormatter={val => `$${val}`}
+                        tickFormatter={val => `$${Number(val).toFixed(2)}`}
                       />
                       <Tooltip
                         formatter={(val: any, name: any) => [
-                          `$${Number(val).toFixed(name === 'AWS Total Cost' ? 2 : 4)}`,
+                          `$${Number(val).toFixed(2)}`,
                           `${name || 'Daily Cost'}`,
                         ]}
                         labelFormatter={label => `Date: ${label}`}

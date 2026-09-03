@@ -43,6 +43,8 @@ export const costInsightsTranslationPt = createTranslationMessages({
     'globalCluster.totalClusterDaily': 'Gasto Diário no Cluster',
     'globalCluster.totalClusterMonthly': 'Projeção Mensal no Cluster',
     'globalCluster.efficiencyAvg': 'Eficiência Média do Cluster',
+    'globalCluster.perDay': '/dia',
+    'globalCluster.perMonth': '/mês',
 
     'periodSelect.past30Days': 'Últimos 30 Dias',
     'periodSelect.past60Days': 'Últimos 60 Dias',

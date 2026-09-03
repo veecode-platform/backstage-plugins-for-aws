@@ -95,7 +95,7 @@ export const CleanEntityCostCard = () => {
     if (tabIndex === 0 || serviceList.length <= 1) {
       return (costData.aggregation || []).map(item => ({
         date: item.date,
-        cost: Number(item.amount.toFixed(4)),
+        cost: Number(item.amount.toFixed(2)),
       }));
     }
 
@@ -105,7 +105,7 @@ export const CleanEntityCostCard = () => {
         const point: Record<string, any> = { date };
         (costData.groupedCosts!.service as any[]).forEach(svc => {
           const match = (svc.aggregation || []).find((a: any) => a.date === date);
-          point[svc.id] = match ? Number(match.amount.toFixed(4)) : 0;
+          point[svc.id] = match ? Number(match.amount.toFixed(2)) : 0;
         });
         return point;
       });
@@ -172,7 +172,7 @@ export const CleanEntityCostCard = () => {
               {t('globalPage.totalPeriodLabel' as any, { period: periodLabel })}
             </Typography>
             <Typography variant="h5" style={{ fontWeight: 700, color: '#1976d2' }}>
-              ${totalPeriodCost.toFixed(4)}
+              ${totalPeriodCost.toFixed(2)}
             </Typography>
           </div>
           <Divider orientation="vertical" flexItem />
@@ -181,7 +181,7 @@ export const CleanEntityCostCard = () => {
               {t('globalPage.dailyAverageLabel')}
             </Typography>
             <Typography variant="subtitle1" style={{ fontWeight: 600 }}>
-              {t('entityCard.dailyAvgFormat' as any, { avg: dailyAverageCost.toFixed(4) })}
+              {t('entityCard.dailyAvgFormat' as any, { avg: dailyAverageCost.toFixed(2) })}
             </Typography>
           </div>
         </Box>
@@ -258,11 +258,11 @@ export const CleanEntityCostCard = () => {
                 <YAxis
                   tickLine={false}
                   tick={{ fill: '#888', fontSize: 12 }}
-                  tickFormatter={val => `$${val}`}
+                  tickFormatter={val => `$${Number(val).toFixed(2)}`}
                 />
                 <Tooltip
                   formatter={(val: any, name: any) => [
-                    `$${Number(val).toFixed(4)}`,
+                    `$${Number(val).toFixed(2)}`,
                     `${name || serviceList[0] || 'Daily Cost'}`,
                   ]}
                   labelFormatter={label => `Date: ${label}`}
