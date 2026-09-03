@@ -26,6 +26,7 @@ import { Cost } from '@backstage-community/plugin-cost-insights-common';
 import { Page, Header, Content } from '@backstage/core-components';
 import { costInsightsTranslationRef } from '../translations';
 import { RichPeriodSelect } from './RichPeriodSelect';
+import { GlobalClusterCostCard } from './GlobalClusterCostCard';
 
 export const CleanCostInsightsPage = () => {
   const client = useApi(costInsightsApiRef);
@@ -134,9 +135,9 @@ export const CleanCostInsightsPage = () => {
             </Box>
           )}
 
+          {/* Card 1: AWS Cloud Infrastructure Spend */}
           <Card variant="outlined" style={{ width: '100%' }}>
             <CardContent>
-              {/* Header with KPI and Date Picker */}
               <Box
                 display="flex"
                 justifyContent="space-between"
@@ -173,6 +174,7 @@ export const CleanCostInsightsPage = () => {
                 </Box>
 
                 <RichPeriodSelect
+                  initialPreset="P90D"
                   onPeriodChange={(newIntervals, newLabel) => {
                     setIntervals(newIntervals);
                     setPeriodLabel(newLabel);
@@ -260,7 +262,10 @@ export const CleanCostInsightsPage = () => {
                         tickFormatter={val => `$${val}`}
                       />
                       <Tooltip
-                        formatter={(val: any) => [`$${val}`, 'Daily Cost']}
+                        formatter={(val: any, name: any) => [
+                          `$${Number(val).toFixed(name === 'AWS Total Cost' ? 2 : 4)}`,
+                          `${name || 'Daily Cost'}`,
+                        ]}
                         labelFormatter={label => `Date: ${label}`}
                         contentStyle={{
                           backgroundColor: '#222',
@@ -272,7 +277,7 @@ export const CleanCostInsightsPage = () => {
                         <Area
                           type="monotone"
                           dataKey="cost"
-                          name="Total Cost"
+                          name="AWS Total Cost"
                           stroke="#1976d2"
                           strokeWidth={2}
                           fillOpacity={1}
@@ -298,6 +303,9 @@ export const CleanCostInsightsPage = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Card 2: Platform Cluster Workload Spend (OpenCost) */}
+          <GlobalClusterCostCard />
         </Box>
       </Content>
     </Page>

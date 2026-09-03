@@ -4,8 +4,8 @@ import { costInsightsTranslationRef } from './ref';
 export const costInsightsTranslationPt = createTranslationMessages({
   ref: costInsightsTranslationRef,
   messages: {
-    'globalPage.title': 'Cost Insights',
-    'globalPage.subtitle': 'Visão financeira de infraestrutura em nuvem e workloads',
+    'globalPage.title': 'AWS Cost Insights',
+    'globalPage.subtitle': 'Visão financeira de infraestrutura na nuvem AWS e workloads do cluster da plataforma',
     'globalPage.totalCostTab': 'Custo total',
     'globalPage.breakdownTab': 'Divisão por serviço',
     'globalPage.totalPeriodLabel': 'Gasto Total ({{period}})',
@@ -21,7 +21,7 @@ export const costInsightsTranslationPt = createTranslationMessages({
     'entityCard.totalCostTab': 'Custo total',
     'entityCard.breakdownTab': 'Divisão por serviço',
     'entityCard.dailyAvgFormat': '~${{avg}}/dia média',
-    'entityCard.noData': 'Nenhum dado de custo encontrado para este serviço no período selecionado.',
+    'entityCard.noData': 'Nenhum dado de custo encontrado para esta entidade no período selecionado.',
     'entityCard.fetchError': 'Erro ao buscar dados de custo da entidade: {{error}}',
 
     'clusterCard.title': 'Custos de Workload no Cluster (OpenCost / Kubernetes)',
@@ -34,6 +34,15 @@ export const costInsightsTranslationPt = createTranslationMessages({
     'clusterCard.monthlyProjectionHeader': 'Projeção Mensal',
     'clusterCard.efficiencyHeader': 'Eficiência',
     'clusterCard.noWorkload': 'Nenhum workload ativo encontrado no cluster k3s para este identificador.',
+
+    'globalCluster.title': 'Custos de Workloads no Cluster da Plataforma (OpenCost / Kubernetes)',
+    'globalCluster.subtitle': 'Rateio de custos de todos os namespaces e stacks ativas no cluster Kubernetes',
+    'globalCluster.badge': 'Cluster da Plataforma',
+    'globalCluster.allNamespaces': 'Todos os Namespaces',
+    'globalCluster.searchPlaceholder': 'Filtrar namespace...',
+    'globalCluster.totalClusterDaily': 'Gasto Diário no Cluster',
+    'globalCluster.totalClusterMonthly': 'Projeção Mensal no Cluster',
+    'globalCluster.efficiencyAvg': 'Eficiência Média do Cluster',
 
     'periodSelect.past30Days': 'Últimos 30 Dias',
     'periodSelect.past60Days': 'Últimos 60 Dias',

@@ -2,8 +2,8 @@ import { createTranslationRef } from '@backstage/core-plugin-api/alpha';
 
 export const costInsightsMessages = {
   globalPage: {
-    title: 'Cost Insights',
-    subtitle: 'Cloud infrastructure and workload financial overview',
+    title: 'AWS Cost Insights',
+    subtitle: 'AWS cloud infrastructure and platform cluster workload financial overview',
     totalCostTab: 'Total cost',
     breakdownTab: 'Breakdown by service',
     totalPeriodLabel: 'Total Spend ({{period}})',
@@ -20,7 +20,7 @@ export const costInsightsMessages = {
     totalCostTab: 'Total cost',
     breakdownTab: 'Breakdown by service',
     dailyAvgFormat: '~${{avg}}/day avg',
-    noData: 'No cost data found for this service in the selected period.',
+    noData: 'No cost data found for this entity in the selected period.',
     fetchError: 'Error fetching entity cost data: {{error}}',
   },
   clusterCard: {
@@ -34,6 +34,16 @@ export const costInsightsMessages = {
     monthlyProjectionHeader: 'Monthly Projection',
     efficiencyHeader: 'Efficiency',
     noWorkload: 'No active workload found in k3s cluster for this identifier.',
+  },
+  globalCluster: {
+    title: 'Platform Cluster Workload Spend (OpenCost / Kubernetes)',
+    subtitle: 'Cost allocation across all active namespaces and platform stacks in the cluster',
+    badge: 'Platform Cluster',
+    allNamespaces: 'All Namespaces',
+    searchPlaceholder: 'Filter namespace...',
+    totalClusterDaily: 'Daily In-Cluster Spend',
+    totalClusterMonthly: 'Monthly In-Cluster Projection',
+    efficiencyAvg: 'Cluster Efficiency Avg',
   },
   periodSelect: {
     past30Days: 'Past 30 Days',

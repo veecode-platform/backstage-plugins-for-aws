@@ -261,7 +261,10 @@ export const CleanEntityCostCard = () => {
                   tickFormatter={val => `$${val}`}
                 />
                 <Tooltip
-                  formatter={(val: any) => [`$${val}`, 'Daily Cost']}
+                  formatter={(val: any, name: any) => [
+                    `$${Number(val).toFixed(4)}`,
+                    `${name || serviceList[0] || 'Daily Cost'}`,
+                  ]}
                   labelFormatter={label => `Date: ${label}`}
                   contentStyle={{
                     backgroundColor: '#222',
@@ -273,7 +276,7 @@ export const CleanEntityCostCard = () => {
                   <Area
                     type="monotone"
                     dataKey="cost"
-                    name={serviceList[0] || 'Total Cost'}
+                    name={serviceList[0] || 'AWS Resource'}
                     stroke="#1976d2"
                     strokeWidth={2}
                     fillOpacity={1}
