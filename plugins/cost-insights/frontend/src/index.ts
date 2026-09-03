@@ -11,4 +11,16 @@
  * limitations under the License.
  */
 
+import MonetizationOnIcon from '@material-ui/icons/MonetizationOn';
+
+export const CostInsightsIcon = MonetizationOnIcon;
+
 export { costInsightsAwsPlugin } from './plugin';
+export {
+  EntityCostInsightsContent,
+  CostInsightsProjectGrowthInstructionsPage,
+  CostInsightsLabelDataflowInstructionsPage,
+} from '@backstage-community/plugin-cost-insights';
+
+export { CleanCostInsightsPage as CostInsightsPage } from './components/CleanCostInsightsPage';
+export { EntityClusterCostCard } from './components/EntityClusterCostCard';
