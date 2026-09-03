@@ -6,12 +6,8 @@ import {
   Box,
   Tabs,
   Tab,
-  FormControl,
-  Select,
-  MenuItem,
   CircularProgress,
   Divider,
-  Chip,
 } from '@material-ui/core';
 import CloudQueueIcon from '@material-ui/icons/CloudQueue';
 import Alert from '@material-ui/lab/Alert';
@@ -25,19 +21,27 @@ import {
   Tooltip,
 } from 'recharts';
 import { useApi } from '@backstage/core-plugin-api';
+import { useTranslationRef } from '@backstage/core-plugin-api/alpha';
 import { costInsightsApiRef } from '@backstage-community/plugin-cost-insights';
 import { Cost } from '@backstage-community/plugin-cost-insights-common';
 import { useEntity } from '@backstage/plugin-catalog-react';
 import { stringifyEntityRef } from '@backstage/catalog-model';
+import { costInsightsTranslationRef } from '../translations';
+import { RichPeriodSelect } from './RichPeriodSelect';
 
 export const CleanEntityCostCard = () => {
   const client = useApi(costInsightsApiRef);
   const { entity } = useEntity();
+  const { t } = useTranslationRef(costInsightsTranslationRef);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [costData, setCostData] = useState<Cost | null>(null);
-  const [duration, setDuration] = useState('P30D');
+  const [intervals, setIntervals] = useState(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return `R30/P1D/${today}`;
+  });
+  const [periodLabel, setPeriodLabel] = useState('Past 30 Days');
   const [tabIndex, setTabIndex] = useState(0);
 
   const entityRef = stringifyEntityRef(entity);
@@ -52,14 +56,6 @@ export const CleanEntityCostCard = () => {
       setLoading(true);
       setError(null);
       try {
-        const today = new Date().toISOString().split('T')[0];
-        const intervals =
-          duration === 'P30D'
-            ? `R30/P1D/${today}`
-            : duration === 'P90D'
-            ? `R2/P90D/${today}`
-            : `R2/P90D/${today}`;
-
         const data = await client.getCatalogEntityDailyCost(entityRef, intervals);
         if (mounted) {
           setCostData(data);
@@ -74,7 +70,7 @@ export const CleanEntityCostCard = () => {
     return () => {
       mounted = false;
     };
-  }, [client, entityRef, duration]);
+  }, [client, entityRef, intervals]);
 
   const serviceList = useMemo(() => {
     if (!costData?.groupedCosts?.service) return [];
@@ -84,10 +80,15 @@ export const CleanEntityCostCard = () => {
     return [];
   }, [costData]);
 
-  const totalCostPeriod = useMemo(() => {
+  const totalPeriodCost = useMemo(() => {
     if (!costData?.aggregation) return 0;
     return costData.aggregation.reduce((acc, curr) => acc + curr.amount, 0);
   }, [costData]);
+
+  const dailyAverageCost = useMemo(() => {
+    if (!costData?.aggregation || costData.aggregation.length === 0) return 0;
+    return totalPeriodCost / costData.aggregation.length;
+  }, [costData, totalPeriodCost]);
 
   const chartData = useMemo(() => {
     if (!costData) return [];
@@ -98,7 +99,6 @@ export const CleanEntityCostCard = () => {
       }));
     }
 
-    // Breakdown by service
     if (Array.isArray(costData.groupedCosts?.service)) {
       const dates = (costData.aggregation || []).map(a => a.date);
       return dates.map(date => {
@@ -125,43 +125,65 @@ export const CleanEntityCostCard = () => {
   return (
     <Card variant="outlined" style={{ width: '100%' }}>
       <CardContent>
+        {/* Title and Subtitle */}
         <Box
           display="flex"
           justifyContent="space-between"
           alignItems="center"
+          flexWrap="wrap"
           mb={2}
+          style={{ gap: 16 }}
         >
           <Box display="flex" alignItems="center">
-            <CloudQueueIcon color="primary" style={{ marginRight: 8 }} />
+            <CloudQueueIcon color="primary" style={{ marginRight: 12, fontSize: 32 }} />
             <div>
               <Typography variant="h6" color="textPrimary">
-                Dedicated Cloud Resources (AWS Cost Explorer)
+                {t('entityCard.cloudTitle')}
               </Typography>
               <Typography variant="body2" color="textSecondary">
                 {serviceList.length === 1
-                  ? `Recursos dedicados faturados: ${serviceList[0]}`
-                  : `Recursos de nuvem filtrados por tags da AWS (${tagAnnotation || 'default'})`}
+                  ? t('entityCard.cloudSubtitleSingle' as any, { service: serviceList[0] })
+                  : t('entityCard.cloudSubtitleMultiple' as any, { tags: tagAnnotation || 'default' })}
               </Typography>
             </div>
           </Box>
-          <Box display="flex" alignItems="center">
-            <Chip
-              label={`Total no período: $${totalCostPeriod.toFixed(2)}`}
-              color="default"
-              variant="outlined"
-              size="small"
-              style={{ marginRight: 12, fontWeight: 600 }}
-            />
-            <FormControl variant="outlined" size="small">
-              <Select
-                value={duration}
-                onChange={e => setDuration(e.target.value as string)}
-              >
-                <MenuItem value="P30D">Past 30 Days</MenuItem>
-                <MenuItem value="P90D">Past 90 Days</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
+
+          <RichPeriodSelect
+            initialPreset="P30D"
+            onPeriodChange={(newIntervals, newLabel) => {
+              setIntervals(newIntervals);
+              setPeriodLabel(newLabel);
+            }}
+          />
+        </Box>
+
+        {/* KPI Banner */}
+        <Box
+          display="flex"
+          alignItems="baseline"
+          mb={2}
+          p={1.5}
+          bgcolor="action.hover"
+          borderRadius={6}
+          style={{ gap: 20 }}
+        >
+          <div>
+            <Typography variant="caption" color="textSecondary" style={{ textTransform: 'uppercase' }}>
+              {t('globalPage.totalPeriodLabel' as any, { period: periodLabel })}
+            </Typography>
+            <Typography variant="h5" style={{ fontWeight: 700, color: '#1976d2' }}>
+              ${totalPeriodCost.toFixed(4)}
+            </Typography>
+          </div>
+          <Divider orientation="vertical" flexItem />
+          <div>
+            <Typography variant="caption" color="textSecondary" style={{ textTransform: 'uppercase' }}>
+              {t('globalPage.dailyAverageLabel')}
+            </Typography>
+            <Typography variant="subtitle1" style={{ fontWeight: 600 }}>
+              {t('entityCard.dailyAvgFormat' as any, { avg: dailyAverageCost.toFixed(4) })}
+            </Typography>
+          </div>
         </Box>
 
         {serviceList.length > 1 && (
@@ -172,8 +194,8 @@ export const CleanEntityCostCard = () => {
               textColor="primary"
               onChange={(_, val) => setTabIndex(val)}
             >
-              <Tab label="Total cost" />
-              <Tab label="Breakdown by service" />
+              <Tab label={t('entityCard.totalCostTab')} />
+              <Tab label={t('entityCard.breakdownTab')} />
             </Tabs>
           </Box>
         )}
@@ -182,7 +204,9 @@ export const CleanEntityCostCard = () => {
 
         {error && (
           <Box mb={2}>
-            <Alert severity="error">{error}</Alert>
+            <Alert severity="error">
+              {t('entityCard.fetchError' as any, { error })}
+            </Alert>
           </Box>
         )}
 
@@ -203,7 +227,7 @@ export const CleanEntityCostCard = () => {
             height={300}
           >
             <Typography color="textSecondary">
-              Nenhum dado de custo encontrado para este serviço no período selecionado.
+              {t('entityCard.noData')}
             </Typography>
           </Box>
         ) : (

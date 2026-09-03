@@ -16,11 +16,14 @@ import {
 import StorageIcon from '@material-ui/icons/Storage';
 import { useEntity } from '@backstage/plugin-catalog-react';
 import { discoveryApiRef, fetchApiRef, useApi } from '@backstage/core-plugin-api';
+import { useTranslationRef } from '@backstage/core-plugin-api/alpha';
+import { costInsightsTranslationRef } from '../translations';
 
 export const EntityClusterCostCard = () => {
   const { entity } = useEntity();
   const discoveryApi = useApi(discoveryApiRef);
   const fetchApi = useApi(fetchApiRef);
+  const { t } = useTranslationRef(costInsightsTranslationRef);
 
   const [clusterCost, setClusterCost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -91,14 +94,14 @@ export const EntityClusterCostCard = () => {
               <StorageIcon color="primary" style={{ marginRight: 8 }} />
               <div>
                 <Typography variant="h6" color="textPrimary">
-                  In-Cluster Workload Spend (OpenCost / Kubernetes)
+                  {t('clusterCard.title')}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                  Consumo real de CPU e memória rateado para o cluster k3s do laboratório
+                  {t('clusterCard.subtitle')}
                 </Typography>
               </div>
             </Box>
-            <Chip label="Real-time k3s" color="primary" size="small" />
+            <Chip label={t('clusterCard.badge')} color="primary" size="small" />
           </Box>
 
           {loading ? (
@@ -110,12 +113,12 @@ export const EntityClusterCostCard = () => {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell><strong>Workload / Namespace</strong></TableCell>
-                    <TableCell align="right"><strong>CPU Cost (Dia)</strong></TableCell>
-                    <TableCell align="right"><strong>RAM Cost (Dia)</strong></TableCell>
-                    <TableCell align="right"><strong>Total Diário</strong></TableCell>
-                    <TableCell align="right"><strong>Projeção Mensal</strong></TableCell>
-                    <TableCell align="right"><strong>Eficiência</strong></TableCell>
+                    <TableCell><strong>{t('clusterCard.workloadHeader')}</strong></TableCell>
+                    <TableCell align="right"><strong>{t('clusterCard.cpuCostHeader')}</strong></TableCell>
+                    <TableCell align="right"><strong>{t('clusterCard.ramCostHeader')}</strong></TableCell>
+                    <TableCell align="right"><strong>{t('clusterCard.dailyTotalHeader')}</strong></TableCell>
+                    <TableCell align="right"><strong>{t('clusterCard.monthlyProjectionHeader')}</strong></TableCell>
+                    <TableCell align="right"><strong>{t('clusterCard.efficiencyHeader')}</strong></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -145,7 +148,7 @@ export const EntityClusterCostCard = () => {
             </>
           ) : (
             <Typography variant="body2" color="textSecondary">
-              Nenhum workload ativo encontrado no cluster k3s para este identificador.
+              {t('clusterCard.noWorkload')}
             </Typography>
           )}
         </CardContent>

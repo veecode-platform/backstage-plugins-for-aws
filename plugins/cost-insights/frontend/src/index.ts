@@ -24,3 +24,5 @@ export {
 export { CleanCostInsightsPage as CostInsightsPage } from './components/CleanCostInsightsPage';
 export { CleanEntityCostCard as EntityCostInsightsContent } from './components/CleanEntityCostCard';
 export { EntityClusterCostCard } from './components/EntityClusterCostCard';
+
+export { costInsightsTranslations, costInsightsTranslationRef } from './translations';
