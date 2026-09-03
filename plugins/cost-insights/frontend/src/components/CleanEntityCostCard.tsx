@@ -20,7 +20,7 @@ import {
   CartesianGrid,
   Tooltip,
 } from 'recharts';
-import { useApi } from '@backstage/core-plugin-api';
+import { useApi, discoveryApiRef, fetchApiRef } from '@backstage/core-plugin-api';
 import { useTranslationRef } from '@backstage/core-plugin-api/alpha';
 import { costInsightsApiRef } from '@backstage-community/plugin-cost-insights';
 import { Cost } from '@backstage-community/plugin-cost-insights-common';
@@ -31,12 +31,15 @@ import { RichPeriodSelect } from './RichPeriodSelect';
 
 export const CleanEntityCostCard = () => {
   const client = useApi(costInsightsApiRef);
+  const discoveryApi = useApi(discoveryApiRef);
+  const fetchApi = useApi(fetchApiRef);
   const { entity } = useEntity();
   const { t } = useTranslationRef(costInsightsTranslationRef);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [costData, setCostData] = useState<Cost | null>(null);
+  const [k8sMonthlyCost, setK8sMonthlyCost] = useState<number>(0);
   const [intervals, setIntervals] = useState(() => {
     const today = new Date().toISOString().split('T')[0];
     return `R30/P1D/${today}`;
@@ -48,6 +51,11 @@ export const CleanEntityCostCard = () => {
   const tagAnnotation =
     entity.metadata.annotations?.['aws.amazon.com/cost-insights-tags'] ||
     entity.metadata.annotations?.['aws.amazon.com/cost-insights-cost-categories'];
+
+  const k8sNs = entity.metadata.annotations?.['backstage.io/kubernetes-namespace'];
+  const k8sId =
+    entity.metadata.annotations?.['backstage.io/kubernetes-id'] ||
+    entity.metadata.name;
 
   useEffect(() => {
     let mounted = true;
@@ -72,6 +80,47 @@ export const CleanEntityCostCard = () => {
     };
   }, [client, entityRef, intervals]);
 
+  useEffect(() => {
+    let mounted = true;
+    async function loadK8sTco() {
+      try {
+        const baseUrl = await discoveryApi.getBaseUrl('proxy');
+        const res = await fetchApi.fetch(
+          `${baseUrl}/opencost/allocation/compute?window=today&aggregate=namespace`,
+        );
+        const json = await res.json();
+        if (mounted && json.data && json.data.length > 0) {
+          const allocations = json.data[0];
+          let matched = null;
+          if (k8sNs && allocations[k8sNs]) {
+            matched = allocations[k8sNs];
+          } else {
+            const searchTerms = [
+              (k8sId || '').toLowerCase().replace(/-service$/, ''),
+              entity.metadata.name.toLowerCase().replace(/-service$/, ''),
+            ].filter(Boolean);
+            for (const key of Object.keys(allocations)) {
+              const lowerKey = key.toLowerCase();
+              if (searchTerms.some(term => lowerKey.includes(term))) {
+                matched = allocations[key];
+                break;
+              }
+            }
+          }
+          if (matched && matched.totalCost) {
+            setK8sMonthlyCost(matched.totalCost * 30.5);
+          }
+        }
+      } catch {
+        // OpenCost not present or unreachable
+      }
+    }
+    loadK8sTco();
+    return () => {
+      mounted = false;
+    };
+  }, [discoveryApi, fetchApi, k8sNs, k8sId, entity.metadata.name]);
+
   const serviceList = useMemo(() => {
     if (!costData?.groupedCosts?.service) return [];
     if (Array.isArray(costData.groupedCosts.service)) {
@@ -80,52 +129,59 @@ export const CleanEntityCostCard = () => {
     return [];
   }, [costData]);
 
-  const totalPeriodCost = useMemo(() => {
-    if (!costData?.aggregation) return 0;
-    return costData.aggregation.reduce((acc, curr) => acc + curr.amount, 0);
+  const chartData = useMemo(() => {
+    if (!costData?.groupedCosts?.service) return [];
+
+    const dateMap = new Map<string, any>();
+    const services = Array.isArray(costData.groupedCosts.service)
+      ? (costData.groupedCosts.service as any[])
+      : [];
+
+    services.forEach(srv => {
+      const srvName = srv.id;
+      const agg = srv.aggregation || [];
+      agg.forEach((point: any) => {
+        const date = point.date;
+        if (!dateMap.has(date)) {
+          dateMap.set(date, { date, total: 0 });
+        }
+        const record = dateMap.get(date);
+        const amt = Number((point.amount || 0).toFixed(2));
+        record[srvName] = amt;
+        record.total = Number((record.total + amt).toFixed(2));
+      });
+    });
+
+    return Array.from(dateMap.values()).sort((a, b) =>
+      a.date.localeCompare(b.date),
+    );
   }, [costData]);
 
+  const totalPeriodCost = useMemo(() => {
+    return chartData.reduce((acc, curr) => acc + (curr.total || 0), 0);
+  }, [chartData]);
+
   const dailyAverageCost = useMemo(() => {
-    if (!costData?.aggregation || costData.aggregation.length === 0) return 0;
-    return totalPeriodCost / costData.aggregation.length;
-  }, [costData, totalPeriodCost]);
+    if (chartData.length === 0) return 0;
+    return totalPeriodCost / chartData.length;
+  }, [totalPeriodCost, chartData.length]);
 
-  const chartData = useMemo(() => {
-    if (!costData) return [];
-    if (tabIndex === 0 || serviceList.length <= 1) {
-      return (costData.aggregation || []).map(item => ({
-        date: item.date,
-        cost: Number(item.amount.toFixed(2)),
-      }));
-    }
+  const awsMonthlyEstimate = dailyAverageCost * 30.5;
+  const totalMonthlyTco = awsMonthlyEstimate + k8sMonthlyCost;
 
-    if (Array.isArray(costData.groupedCosts?.service)) {
-      const dates = (costData.aggregation || []).map(a => a.date);
-      return dates.map(date => {
-        const point: Record<string, any> = { date };
-        (costData.groupedCosts!.service as any[]).forEach(svc => {
-          const match = (svc.aggregation || []).find((a: any) => a.date === date);
-          point[svc.id] = match ? Number(match.amount.toFixed(2)) : 0;
-        });
-        return point;
-      });
-    }
-    return [];
-  }, [costData, tabIndex, serviceList]);
-
-  const serviceColors = [
+  const colors = [
     '#1976d2',
     '#388e3c',
     '#f57c00',
+    '#d32f2f',
     '#7b1fa2',
-    '#0097a7',
-    '#c2185b',
+    '#0288d1',
   ];
 
   return (
-    <Card variant="outlined" style={{ width: '100%' }}>
+    <Card variant="outlined" style={{ marginBottom: 24 }}>
       <CardContent>
-        {/* Title and Subtitle */}
+        {/* Header */}
         <Box
           display="flex"
           justifyContent="space-between"
@@ -155,6 +211,46 @@ export const CleanEntityCostCard = () => {
               setPeriodLabel(newLabel);
             }}
           />
+        </Box>
+
+        {/* Consolidated Monthly TCO Banner */}
+        <Box
+          mb={2}
+          p={1.5}
+          bgcolor="action.hover"
+          borderRadius={6}
+          border={1}
+          borderColor="divider"
+        >
+          <Typography
+            variant="caption"
+            color="textSecondary"
+            style={{
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+              fontWeight: 700,
+            }}
+          >
+            {t('entityCard.tcoTitle')}
+          </Typography>
+          <Box display="flex" alignItems="baseline" mt={0.5} flexWrap="wrap" style={{ gap: 10 }}>
+            <Typography variant="h5" style={{ fontWeight: 700, color: '#1976d2' }}>
+              ${totalMonthlyTco.toFixed(2)}
+              <Typography component="span" variant="body2" color="textSecondary" style={{ marginLeft: 4, fontWeight: 500 }}>
+                /mo
+              </Typography>
+            </Typography>
+            <Typography variant="body2" color="textSecondary" style={{ fontWeight: 500 }}>
+              {k8sMonthlyCost > 0
+                ? t('entityCard.tcoBreakdown' as any, {
+                    aws: awsMonthlyEstimate.toFixed(2),
+                    k8s: k8sMonthlyCost.toFixed(2),
+                  })
+                : t('entityCard.tcoCloudOnly' as any, {
+                    aws: awsMonthlyEstimate.toFixed(2),
+                  })}
+            </Typography>
+          </Box>
         </Box>
 
         {/* KPI Banner */}
@@ -224,75 +320,56 @@ export const CleanEntityCostCard = () => {
             display="flex"
             justifyContent="center"
             alignItems="center"
-            height={300}
+            height={200}
           >
             <Typography color="textSecondary">
               {t('entityCard.noData')}
             </Typography>
           </Box>
         ) : (
-          <Box width="100%" height={320}>
+          <Box height={350} width="100%">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={chartData}
-                margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
+                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
               >
                 <defs>
-                  <linearGradient
-                    id="colorEntityCost"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop offset="5%" stopColor="#1976d2" stopOpacity={0.6} />
-                    <stop offset="95%" stopColor="#1976d2" stopOpacity={0.05} />
+                  <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#1976d2" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#1976d2" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  tick={{ fill: '#888', fontSize: 12 }}
-                />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                 <YAxis
-                  tickLine={false}
-                  tick={{ fill: '#888', fontSize: 12 }}
+                  tick={{ fontSize: 12 }}
                   tickFormatter={val => `$${Number(val).toFixed(2)}`}
                 />
                 <Tooltip
-                  formatter={(val: any, name: any) => [
-                    `$${Number(val).toFixed(2)}`,
-                    `${name || serviceList[0] || 'Daily Cost'}`,
-                  ]}
-                  labelFormatter={label => `Date: ${label}`}
-                  contentStyle={{
-                    backgroundColor: '#222',
-                    borderRadius: 6,
-                    color: '#fff',
+                  formatter={(value: any, name: any) => {
+                    const num = Number(value || 0);
+                    const formatted = `$${num.toFixed(2)}`;
+                    const label = name === 'total' ? 'AWS Total Cost' : name;
+                    return [formatted, label];
                   }}
                 />
                 {tabIndex === 0 || serviceList.length <= 1 ? (
                   <Area
                     type="monotone"
-                    dataKey="cost"
-                    name={serviceList[0] || 'AWS Resource'}
+                    dataKey="total"
                     stroke="#1976d2"
-                    strokeWidth={2}
                     fillOpacity={1}
-                    fill="url(#colorEntityCost)"
+                    fill="url(#colorTotal)"
                   />
                 ) : (
-                  serviceList.map((svc, idx) => (
+                  serviceList.map((srv, idx) => (
                     <Area
-                      key={svc}
+                      key={srv}
                       type="monotone"
-                      dataKey={svc}
-                      name={svc}
-                      stroke={serviceColors[idx % serviceColors.length]}
-                      fill={serviceColors[idx % serviceColors.length]}
-                      fillOpacity={0.2}
+                      dataKey={srv}
                       stackId="1"
+                      stroke={colors[idx % colors.length]}
+                      fill={colors[idx % colors.length]}
                     />
                   ))
                 )}
