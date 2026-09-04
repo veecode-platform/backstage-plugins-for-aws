@@ -344,6 +344,74 @@ export class CostExplorerCostInsightsAwsService
     return root;
   }
 
+  public async getOrgDailyCost(options: {
+    intervals: string;
+    credentials?: BackstageCredentials;
+  }): Promise<Cost> {
+    const { intervals } = options;
+
+    this.logger.debug('Fetch org-wide daily costs');
+
+    const { startDate, endDate } = this.parseInterval(intervals);
+
+    const costMetric = this.config.costExplorer.costMetric;
+
+    // No filter => whole configured Cost Explorer account/context, i.e.
+    // whatever the configured costExplorer.accountId (or default credential
+    // chain) principal's CE view covers.
+    const root = await this.getAggregations(
+      'org',
+      undefined,
+      costMetric,
+      Granularity.DAILY,
+      startDate,
+      endDate,
+    );
+
+    // Same opt-in mechanism as getProjectDailyCost: an entityGroups entry
+    // with kind 'Project' enables grouped costs (e.g. by SERVICE) for the
+    // org-wide view too.
+    const groupedCosts: Record<string, Cost[]> = {};
+
+    const promises = [];
+    for (const entityGroup of this.config.entityGroups) {
+      if (entityGroup.kind === 'Project') {
+        for (const group of entityGroup.groups) {
+          promises.push(
+            this.getGroupedAggregations(
+              undefined,
+              costMetric,
+              [
+                {
+                  Type: group.type as GroupDefinitionType,
+                  Key: group.key as GroupDefinition['Key'],
+                },
+              ],
+              Granularity.DAILY,
+              startDate,
+              endDate,
+            ).then(e => {
+              return {
+                name: group.name,
+                costs: e,
+              };
+            }),
+          );
+        }
+      }
+    }
+
+    await Promise.all(promises).then(values => {
+      for (const result of values) {
+        groupedCosts[result.name] = result.costs;
+      }
+    });
+
+    root.groupedCosts = groupedCosts;
+
+    return root;
+  }
+
   private async getAggregations(
     id: string,
     filter: Expression | undefined,

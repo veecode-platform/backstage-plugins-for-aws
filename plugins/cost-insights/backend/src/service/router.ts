@@ -152,6 +152,17 @@ export async function createRouter(
     response.status(200).json(data);
   });
 
+  router.get('/v1/org/:intervals', async (request, response) => {
+    const { intervals } = request.params;
+
+    const data = await costInsightsAwsService.getOrgDailyCost({
+      intervals,
+      credentials: await httpAuth.credentials(request),
+    });
+
+    response.status(200).json(data);
+  });
+
   router.get('/health', (_, response) => {
     logger.info('PONG!');
     response.json({ status: 'ok' });

@@ -43,4 +43,9 @@ export interface CostInsightsAwsService {
     intervals: string;
     credentials?: BackstageCredentials;
   }): Promise<Cost>;
+
+  getOrgDailyCost(options: {
+    intervals: string;
+    credentials?: BackstageCredentials;
+  }): Promise<Cost>;
 }
