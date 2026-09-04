@@ -13,8 +13,10 @@
 
 import {
   CostExplorerClient,
+  Dimension,
   Expression,
   GetCostAndUsageCommand,
+  GetDimensionValuesCommand,
   Granularity,
   GroupDefinition,
   GroupDefinitionType,
@@ -27,6 +29,7 @@ import {
   ChangeStatistic,
   Cost,
   DateAggregation,
+  Project,
   Trendline,
 } from '@backstage-community/plugin-cost-insights-common';
 import {
@@ -228,6 +231,117 @@ export class CostExplorerCostInsightsAwsService
       endDate,
       granularity: Granularity.DAILY,
     });
+  }
+
+  public async listProjects(_options: {
+    credentials?: BackstageCredentials;
+  }): Promise<Project[]> {
+    // Cost Insights "projects" map to AWS linked accounts. Only accounts with
+    // usage inside the lookback window are returned, which also keeps the list
+    // meaningful when the configured credentials point at a management account.
+    const endDate = DateTime.now().toUTC();
+    const startDate = endDate.minus(LuxonDuration.fromISO('P90D'));
+
+    const projects: Project[] = [];
+    let nextPageToken: string | undefined;
+
+    do {
+      const response = await this.costExplorerClient.send(
+        new GetDimensionValuesCommand({
+          Dimension: Dimension.LINKED_ACCOUNT,
+          TimePeriod: {
+            Start: this.formatDate(startDate.toJSDate()),
+            End: this.formatDate(endDate.toJSDate()),
+          },
+          NextPageToken: nextPageToken,
+        }),
+      );
+
+      for (const value of response.DimensionValues ?? []) {
+        if (value.Value) {
+          projects.push({
+            id: value.Value,
+            name: value.Attributes?.description,
+          });
+        }
+      }
+
+      nextPageToken = response.NextPageToken;
+    } while (nextPageToken);
+
+    return projects;
+  }
+
+  public async getProjectDailyCost(options: {
+    project: string;
+    intervals: string;
+    credentials?: BackstageCredentials;
+  }): Promise<Cost> {
+    const { project, intervals } = options;
+
+    this.logger.debug(`Fetch daily costs for account ${project}`);
+
+    const { startDate, endDate } = this.parseInterval(intervals);
+
+    const filter: Expression = {
+      Dimensions: {
+        Key: Dimension.LINKED_ACCOUNT,
+        Values: [project],
+      },
+    };
+
+    const costMetric = this.config.costExplorer.costMetric;
+
+    const root = await this.getAggregations(
+      project,
+      filter,
+      costMetric,
+      Granularity.DAILY,
+      startDate,
+      endDate,
+    );
+
+    // Same mechanism as entities: an entityGroups entry with kind 'Project'
+    // opts the per-account view into grouped costs (e.g. by SERVICE).
+    const groupedCosts: Record<string, Cost[]> = {};
+
+    const promises = [];
+    for (const entityGroup of this.config.entityGroups) {
+      if (entityGroup.kind === 'Project') {
+        for (const group of entityGroup.groups) {
+          promises.push(
+            this.getGroupedAggregations(
+              filter,
+              costMetric,
+              [
+                {
+                  Type: group.type as GroupDefinitionType,
+                  Key: group.key as GroupDefinition['Key'],
+                },
+              ],
+              Granularity.DAILY,
+              startDate,
+              endDate,
+            ).then(e => {
+              return {
+                name: group.name,
+                costs: e,
+              };
+            }),
+          );
+        }
+      }
+    }
+
+    await Promise.all(promises).then(values => {
+      for (const result of values) {
+        groupedCosts[result.name] = result.costs;
+      }
+    });
+
+    root.groupedCosts = groupedCosts;
+
+    return root;
   }
 
   private async getAggregations(
