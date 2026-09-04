@@ -42,6 +42,7 @@
   ],
   "dependencies": {
     "@aws-sdk/client-ecs": "^3.922.0",
-    "@backstage/catalog-model": "^1.7.6"
+    "@backstage/catalog-model": "^1.7.6",
+    "@backstage/plugin-permission-common": "^0.9.6"
   }
 }

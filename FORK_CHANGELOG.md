@@ -24,6 +24,51 @@ Refs: FORK_CHANGES.md #N, commits <sha>..<sha>
 
 <!-- New entries go above this line. -->
 
+## 2026-09-04 — Cost Insights: RBAC permission, org-wide route, entity account filter
+
+Three related additions to the cost-insights-aws backend, built on top
+of fork item #15 (per-account projects):
+
+- **Permission gate.** New `cost-insights-aws.cost.read` permission
+  (`plugins/cost-insights/common/src/permissions.ts`), registered via
+  `coreServices.permissionsRegistry.addPermissions` in `plugin.ts`, and
+  enforced by router-level middleware mounted on `/v1` in `router.ts`
+  — positioned ahead of the cache middleware so a DENY throws
+  `NotAllowedError` (-> 403 via the existing `MiddlewareFactory.error()`)
+  before the cache layer can ever serve a cached response, and a denied
+  response is never written to the cache. `/health` sits outside the
+  `/v1` mount and stays unauthenticated. This is the first permission
+  wired anywhere in this fork (no prior in-repo precedent).
+- **Org-wide daily cost route.** `CostInsightsAwsService.getOrgDailyCost`
+  and `GET /v1/org/:intervals`, mirroring `getProjectDailyCost` but with
+  no Cost Explorer filter — returns whatever the configured
+  `costExplorer.accountId` (or default credential chain) principal's CE
+  view covers. Grouped costs opt in through the same `entityGroups`
+  `kind: 'Project'` mechanism already used by `getProjectDailyCost`.
+  Inherits the permission gate automatically (no route-specific change
+  needed, since it lives under `/v1`).
+- **Entity account filter.** New annotation
+  `COST_INSIGHTS_AWS_ACCOUNT_ID_ANNOTATION`
+  (`aws.amazon.com/account-id`, purely opt-in). When present and a valid
+  12-digit AWS account id, `getCatalogEntityRangeCost` ANDs a
+  `{Dimensions: {Key: LINKED_ACCOUNT, Values: [accountId]}}` expression
+  into the existing tags/cost-category filter. Read directly off
+  `entity.metadata.annotations` (not through `getOneOfEntityAnnotations`,
+  which requires its target-list intersection to have length exactly 1
+  and would otherwise break entities carrying both this annotation and
+  the existing tags/cost-category one). An invalid value is ignored
+  with a logged warning; an absent annotation leaves existing behavior
+  unchanged.
+
+**IAM note:** no new IAM permissions required — both new code paths
+reuse the existing `ce:GetCostAndUsage` call.
+
+**Version note:** `plugins/cost-insights/backend/package.json` bumped
+0.8.0 → 0.9.0, same scoped exception to the "never bump Lerna versions"
+rule used for fork item #15 (the overlays release tag derives from it).
+
+Refs: FORK_CHANGES.md #16, commits `fc401c9`..`8514327`
+
 ## 2026-09-04 — Cost Insights frontend: missing TCO translation keys
 
 `CleanEntityCostCard.tsx` referenced `entityCard.tcoTitle` (uncasted)

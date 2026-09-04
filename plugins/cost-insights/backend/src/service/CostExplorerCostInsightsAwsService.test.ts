@@ -27,6 +27,7 @@ import {
   AwsCredentialProviderOptions,
 } from '@backstage/integration-aws-node';
 import {
+  COST_INSIGHTS_AWS_ACCOUNT_ID_ANNOTATION,
   COST_INSIGHTS_AWS_COST_CATEGORY_ANNOTATION,
   COST_INSIGHTS_AWS_TAGS_ANNOTATION,
 } from '@aws/cost-insights-plugin-for-backstage-common';
@@ -291,6 +292,128 @@ describe('CostExplorerCostInsightsAwsService', () => {
         }),
       ).rejects.toThrow('Annotation not found on entity');
     });
+
+    it('ANDs a LINKED_ACCOUNT filter when the entity carries a valid account-id annotation', async () => {
+      costExplorerMock.on(GetCostAndUsageCommand).resolves({
+        ResultsByTime: [
+          {
+            TimePeriod: { Start: '2024-01-01', End: '2024-01-02' },
+            Total: { UnblendedCost: { Amount: '100.00', Unit: 'USD' } },
+            Groups: [],
+          },
+        ],
+      });
+
+      const service = await configureService(
+        {},
+        {
+          kind: 'Component',
+          metadata: {
+            name: 'test-component',
+            annotations: {
+              [COST_INSIGHTS_AWS_TAGS_ANNOTATION]: 'component=test',
+              [COST_INSIGHTS_AWS_ACCOUNT_ID_ANNOTATION]: '111111111111',
+            },
+          },
+        },
+      );
+
+      await service.getCatalogEntityRangeCost({
+        entityRef,
+        startDate: new Date('2024-01-02'),
+        endDate: new Date('2024-01-01'),
+        granularity: Granularity.DAILY,
+        credentials,
+      });
+
+      const calls = costExplorerMock.commandCalls(GetCostAndUsageCommand);
+      expect(calls[0].args[0].input.Filter).toEqual({
+        And: [
+          { Tags: { Key: 'component', Values: ['test'] } },
+          { Dimensions: { Key: 'LINKED_ACCOUNT', Values: ['111111111111'] } },
+        ],
+      });
+    });
+
+    it('falls back to the plain filter when the account-id annotation is absent', async () => {
+      costExplorerMock.on(GetCostAndUsageCommand).resolves({
+        ResultsByTime: [
+          {
+            TimePeriod: { Start: '2024-01-01', End: '2024-01-02' },
+            Total: { UnblendedCost: { Amount: '100.00', Unit: 'USD' } },
+            Groups: [],
+          },
+        ],
+      });
+
+      const service = await configureService(
+        {},
+        {
+          kind: 'Component',
+          metadata: {
+            name: 'test-component',
+            annotations: {
+              [COST_INSIGHTS_AWS_TAGS_ANNOTATION]: 'component=test',
+            },
+          },
+        },
+      );
+
+      await service.getCatalogEntityRangeCost({
+        entityRef,
+        startDate: new Date('2024-01-02'),
+        endDate: new Date('2024-01-01'),
+        granularity: Granularity.DAILY,
+        credentials,
+      });
+
+      const calls = costExplorerMock.commandCalls(GetCostAndUsageCommand);
+      expect(calls[0].args[0].input.Filter).toEqual({
+        Tags: { Key: 'component', Values: ['test'] },
+      });
+    });
+
+    it('ignores an invalid account-id annotation value and falls back to the plain filter', async () => {
+      costExplorerMock.on(GetCostAndUsageCommand).resolves({
+        ResultsByTime: [
+          {
+            TimePeriod: { Start: '2024-01-01', End: '2024-01-02' },
+            Total: { UnblendedCost: { Amount: '100.00', Unit: 'USD' } },
+            Groups: [],
+          },
+        ],
+      });
+
+      const service = await configureService(
+        {},
+        {
+          kind: 'Component',
+          metadata: {
+            name: 'test-component',
+            annotations: {
+              [COST_INSIGHTS_AWS_TAGS_ANNOTATION]: 'component=test',
+              [COST_INSIGHTS_AWS_ACCOUNT_ID_ANNOTATION]: 'not-an-account-id',
+            },
+          },
+        },
+      );
+
+      await service.getCatalogEntityRangeCost({
+        entityRef,
+        startDate: new Date('2024-01-02'),
+        endDate: new Date('2024-01-01'),
+        granularity: Granularity.DAILY,
+        credentials,
+      });
+
+      const calls = costExplorerMock.commandCalls(GetCostAndUsageCommand);
+      expect(calls[0].args[0].input.Filter).toEqual({
+        Tags: { Key: 'component', Values: ['test'] },
+      });
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining(COST_INSIGHTS_AWS_ACCOUNT_ID_ANNOTATION),
+      );
+    });
   });
 
   describe('getCatalogEntityDailyCost', () => {
@@ -491,6 +614,110 @@ describe('CostExplorerCostInsightsAwsService', () => {
       await expect(
         service.getProjectDailyCost({
           project: '111111111111',
+          intervals: 'invalid',
+          credentials,
+        }),
+      ).rejects.toThrow('Incorrect interval for invalid');
+    });
+  });
+
+  describe('getOrgDailyCost', () => {
+    it('returns org-wide daily cost with no filter', async () => {
+      costExplorerMock.on(GetCostAndUsageCommand).resolves({
+        ResultsByTime: [
+          {
+            TimePeriod: { Start: '2024-01-01', End: '2024-01-02' },
+            Total: { UnblendedCost: { Amount: '500.00', Unit: 'USD' } },
+            Groups: [],
+          },
+        ],
+      });
+
+      const service = await configureService({}, undefined);
+
+      const response = await service.getOrgDailyCost({
+        intervals: 'R1/P30D/2024-01-31',
+        credentials,
+      });
+
+      expect(response.id).toBe('org');
+      expect(response.aggregation).toHaveLength(1);
+      expect(response.aggregation[0].amount).toBe(500);
+
+      const calls = costExplorerMock.commandCalls(GetCostAndUsageCommand);
+      expect(calls[0].args[0].input.Filter).toBeUndefined();
+    });
+
+    it('includes grouped costs for Project entityGroups', async () => {
+      costExplorerMock
+        .on(GetCostAndUsageCommand)
+        .resolvesOnce({
+          ResultsByTime: [
+            {
+              TimePeriod: { Start: '2024-01-01', End: '2024-01-02' },
+              Total: { UnblendedCost: { Amount: '10.00', Unit: 'USD' } },
+              Groups: [],
+            },
+          ],
+        })
+        .resolvesOnce({
+          ResultsByTime: [
+            {
+              TimePeriod: { Start: '2024-01-01', End: '2024-01-02' },
+              Groups: [
+                {
+                  Keys: ['EC2'],
+                  Metrics: { UnblendedCost: { Amount: '7.00', Unit: 'USD' } },
+                },
+                {
+                  Keys: ['S3'],
+                  Metrics: { UnblendedCost: { Amount: '3.00', Unit: 'USD' } },
+                },
+              ],
+            },
+          ],
+        });
+
+      const service = await configureService(
+        {
+          aws: {
+            costInsights: {
+              entityGroups: [
+                {
+                  kind: 'Project',
+                  groups: [
+                    {
+                      name: 'service',
+                      key: 'SERVICE',
+                      type: 'DIMENSION',
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        undefined,
+      );
+
+      const response = await service.getOrgDailyCost({
+        intervals: 'R2/P30D/2024-01-31',
+        credentials,
+      });
+
+      expect(response.groupedCosts).toBeDefined();
+      expect(response.groupedCosts!.service).toHaveLength(2);
+      expect(response.groupedCosts!.service[0].id).toBe('EC2');
+
+      const calls = costExplorerMock.commandCalls(GetCostAndUsageCommand);
+      expect(calls[1].args[0].input.Filter).toBeUndefined();
+    });
+
+    it('throws on invalid interval format', async () => {
+      const service = await configureService({}, undefined);
+
+      await expect(
+        service.getOrgDailyCost({
           intervals: 'invalid',
           credentials,
         }),

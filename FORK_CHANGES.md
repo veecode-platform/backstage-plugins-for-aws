@@ -361,6 +361,75 @@ overlays release so the OCI tag stays unique.
 **Merge guidance:** Fork-only feature; upstream stubs these methods. On
 conflict keep ours and re-run the service tests.
 
+### 16. Cost Insights — RBAC Permission, Org-Wide Route, Entity Account Filter
+
+Three related additions on top of item #15:
+
+- **Permission gate.** New `cost-insights-aws.cost.read` permission
+  (`createPermission({name, attributes:{action:'read'}})`), registered
+  via `coreServices.permissionsRegistry.addPermissions` in `plugin.ts`
+  and enforced by router-level middleware mounted on `/v1` in
+  `router.ts`. The middleware runs *before* the cache middleware
+  (both are `router.use(...)` in registration order), so a DENY throws
+  `NotAllowedError` (mapped to HTTP 403 by the existing
+  `MiddlewareFactory.error()`) before the cache layer can serve a
+  cached body, and a denied response is never written to the cache.
+  `/health` sits outside the `/v1` mount and stays unauthenticated.
+- **Org-wide daily cost.** `CostInsightsAwsService.getOrgDailyCost` and
+  `GET /v1/org/:intervals` — same shape as `getProjectDailyCost` but
+  with no Cost Explorer filter (whole configured account/context).
+  Grouped costs opt in via `entityGroups` entries with `kind: 'Project'`
+  (the same kind `getProjectDailyCost` uses). Automatically inherits
+  the `/v1` permission gate.
+- **Entity account filter.** New annotation
+  `COST_INSIGHTS_AWS_ACCOUNT_ID_ANNOTATION`
+  (`aws.amazon.com/account-id`, opt-in). When present and a valid
+  12-digit account id, `getCatalogEntityRangeCost` ANDs a
+  `{Dimensions:{Key:LINKED_ACCOUNT,Values:[accountId]}}` expression into
+  the existing tags/cost-category filter. Read directly from
+  `entity.metadata.annotations` — deliberately **not** through
+  `getOneOfEntityAnnotations`, which requires its target-list
+  intersection to have length exactly 1 and would otherwise throw
+  `'Annotation not found on entity'` for any entity carrying both this
+  annotation and the existing tags/cost-category one. Invalid values
+  are ignored with a logged warning; an absent annotation leaves the
+  filter unchanged.
+
+**Affected files:**
+
+- `plugins/cost-insights/common/src/permissions.ts` (new) —
+  `costInsightsAwsReadPermission`, `costInsightsAwsPermissions`
+- `plugins/cost-insights/common/src/index.ts` — export the above
+- `plugins/cost-insights/common/src/types.ts` —
+  `COST_INSIGHTS_AWS_ACCOUNT_ID_ANNOTATION`
+- `plugins/cost-insights/common/package.json`,
+  `plugins/cost-insights/backend/package.json` —
+  `@backstage/plugin-permission-common@^0.9.6` added
+- `plugins/cost-insights/backend/src/plugin.ts` — registers the
+  permission and passes `permissions` into `createRouter`
+- `plugins/cost-insights/backend/src/service/router.ts` — `/v1`-mounted
+  authorization middleware; new `GET /v1/org/:intervals` route
+- `plugins/cost-insights/backend/src/service/types.ts`,
+  `CostExplorerCostInsightsAwsService.ts` — `getOrgDailyCost`; entity
+  account filter in `getCatalogEntityRangeCost`
+- `plugins/cost-insights/backend/src/service/CostExplorerCostInsightsAwsService.test.ts`,
+  new `router.test.ts` — coverage for all three
+
+**IAM note:** no new IAM permissions required — both new code paths
+reuse the existing `ce:GetCostAndUsage` call.
+
+**Version note:** `plugins/cost-insights/backend/package.json` bumped
+0.8.0 → 0.9.0 by the fork, the same scoped exception to the "never
+bump Lerna versions" rule used for item #15 (the overlays release tag
+derives from it and the previous tag is immutable). On upstream merge
+conflicts in that version line, keep the higher version.
+
+**Merge guidance:** Fork-only feature; upstream has neither a
+permission-gated API nor an org-wide route for this plugin. On
+conflict keep ours and re-run the service/router tests. If upstream
+ever adds its own permission for this plugin, reconcile names/attributes
+rather than keeping both.
+
 ## How to Merge Upstream
 
 ```bash
