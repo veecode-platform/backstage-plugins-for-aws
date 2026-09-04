@@ -22,6 +22,7 @@ import {
   GroupDefinitionType,
 } from '@aws-sdk/client-cost-explorer';
 import {
+  COST_INSIGHTS_AWS_ACCOUNT_ID_ANNOTATION,
   COST_INSIGHTS_AWS_COST_CATEGORY_ANNOTATION,
   COST_INSIGHTS_AWS_TAGS_ANNOTATION,
 } from '@aws/cost-insights-plugin-for-backstage-common';
@@ -146,7 +147,7 @@ export class CostExplorerCostInsightsAwsService
         ? 'Tags'
         : 'CostCategories';
 
-    const filters = annotation.value.split(',').map(e => {
+    const filters: Expression[] = annotation.value.split(',').map(e => {
       const parts = e.split('=');
 
       return {
@@ -156,6 +157,31 @@ export class CostExplorerCostInsightsAwsService
         },
       };
     });
+
+    // Optional, opt-in account scoping: read the annotation directly rather
+    // than through getOneOfEntityAnnotations above — that helper requires
+    // the intersection with its target list to have length exactly 1, so
+    // adding this annotation to that call would break any entity that also
+    // carries the tags/cost-category annotation.
+    const accountId =
+      entity.metadata.annotations?.[COST_INSIGHTS_AWS_ACCOUNT_ID_ANNOTATION];
+
+    if (accountId !== undefined) {
+      if (/^\d{12}$/.test(accountId)) {
+        filters.push({
+          Dimensions: {
+            Key: Dimension.LINKED_ACCOUNT,
+            Values: [accountId],
+          },
+        });
+      } else {
+        this.logger.warn(
+          `Ignoring invalid ${COST_INSIGHTS_AWS_ACCOUNT_ID_ANNOTATION} annotation value "${accountId}" on ${stringifyEntityRef(
+            entityRef,
+          )}: expected a 12-digit AWS account id`,
+        );
+      }
+    }
 
     if (filters.length > 1) {
       filter = {

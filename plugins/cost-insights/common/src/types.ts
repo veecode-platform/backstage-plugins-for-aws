@@ -15,3 +15,5 @@ export const COST_INSIGHTS_AWS_COST_CATEGORY_ANNOTATION =
   'aws.amazon.com/cost-insights-cost-categories';
 export const COST_INSIGHTS_AWS_TAGS_ANNOTATION =
   'aws.amazon.com/cost-insights-tags';
+export const COST_INSIGHTS_AWS_ACCOUNT_ID_ANNOTATION =
+  'aws.amazon.com/account-id';
