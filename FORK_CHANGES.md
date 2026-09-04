@@ -351,6 +351,13 @@ render an account selector on the global cost page.
 **IAM note:** requires `ce:GetDimensionValues` on the CE role (alongside
 `ce:GetCostAndUsage`).
 
+**Version note:** `plugins/cost-insights/backend/package.json` was bumped
+0.7.0 → 0.8.0 by the fork (exception to the Lerna rule — the overlays
+release tag derives from it and the previous tag is immutable). On
+upstream merge conflicts in that version line, keep the higher version;
+if upstream itself reaches 0.8.0, bump ours past it before the next
+overlays release so the OCI tag stays unique.
+
 **Merge guidance:** Fork-only feature; upstream stubs these methods. On
 conflict keep ours and re-run the service tests.
 
