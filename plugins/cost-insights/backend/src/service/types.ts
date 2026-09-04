@@ -13,7 +13,10 @@
 
 import { CompoundEntityRef } from '@backstage/catalog-model';
 import { BackstageCredentials } from '@backstage/backend-plugin-api';
-import { Cost } from '@backstage-community/plugin-cost-insights-common';
+import {
+  Cost,
+  Project,
+} from '@backstage-community/plugin-cost-insights-common';
 import { Granularity } from '@aws-sdk/client-cost-explorer';
 
 export interface CostInsightsAwsService {
@@ -27,6 +30,16 @@ export interface CostInsightsAwsService {
 
   getCatalogEntityDailyCost(options: {
     entityRef: CompoundEntityRef;
+    intervals: string;
+    credentials?: BackstageCredentials;
+  }): Promise<Cost>;
+
+  listProjects(options: {
+    credentials?: BackstageCredentials;
+  }): Promise<Project[]>;
+
+  getProjectDailyCost(options: {
+    project: string;
     intervals: string;
     credentials?: BackstageCredentials;
   }): Promise<Cost>;

@@ -14,6 +14,7 @@
 import {
   CostExplorerClient,
   GetCostAndUsageCommand,
+  GetDimensionValuesCommand,
   Granularity,
 } from '@aws-sdk/client-cost-explorer';
 import { Entity, CompoundEntityRef } from '@backstage/catalog-model';
@@ -344,6 +345,152 @@ describe('CostExplorerCostInsightsAwsService', () => {
       await expect(
         service.getCatalogEntityDailyCost({
           entityRef,
+          intervals: 'invalid',
+          credentials,
+        }),
+      ).rejects.toThrow('Incorrect interval for invalid');
+    });
+  });
+
+  describe('listProjects', () => {
+    it('returns linked accounts as projects, following pagination', async () => {
+      costExplorerMock
+        .on(GetDimensionValuesCommand)
+        .resolvesOnce({
+          DimensionValues: [
+            { Value: '111111111111', Attributes: { description: 'dev' } },
+          ],
+          NextPageToken: 'next',
+        })
+        .resolvesOnce({
+          DimensionValues: [
+            { Value: '222222222222', Attributes: { description: 'prod' } },
+            { Value: undefined },
+          ],
+        });
+
+      const service = await configureService({}, undefined);
+
+      const projects = await service.listProjects({ credentials });
+
+      expect(projects).toEqual([
+        { id: '111111111111', name: 'dev' },
+        { id: '222222222222', name: 'prod' },
+      ]);
+
+      const calls = costExplorerMock.commandCalls(GetDimensionValuesCommand);
+      expect(calls).toHaveLength(2);
+      expect(calls[0].args[0].input.Dimension).toBe('LINKED_ACCOUNT');
+    });
+  });
+
+  describe('getProjectDailyCost', () => {
+    it('returns daily cost filtered by linked account', async () => {
+      costExplorerMock.on(GetCostAndUsageCommand).resolves({
+        ResultsByTime: [
+          {
+            TimePeriod: { Start: '2024-01-01', End: '2024-01-02' },
+            Total: { UnblendedCost: { Amount: '10.00', Unit: 'USD' } },
+            Groups: [],
+          },
+          {
+            TimePeriod: { Start: '2024-01-02', End: '2024-01-03' },
+            Total: { UnblendedCost: { Amount: '20.00', Unit: 'USD' } },
+            Groups: [],
+          },
+        ],
+      });
+
+      const service = await configureService({}, undefined);
+
+      const response = await service.getProjectDailyCost({
+        project: '111111111111',
+        intervals: 'R2/P30D/2024-01-31',
+        credentials,
+      });
+
+      expect(response.id).toBe('111111111111');
+      expect(response.aggregation).toHaveLength(2);
+      expect(response.aggregation[1].amount).toBe(20.0);
+
+      const calls = costExplorerMock.commandCalls(GetCostAndUsageCommand);
+      expect(calls[0].args[0].input.Filter).toEqual({
+        Dimensions: {
+          Key: 'LINKED_ACCOUNT',
+          Values: ['111111111111'],
+        },
+      });
+    });
+
+    it('includes grouped costs for Project entityGroups', async () => {
+      costExplorerMock
+        .on(GetCostAndUsageCommand)
+        .resolvesOnce({
+          ResultsByTime: [
+            {
+              TimePeriod: { Start: '2024-01-01', End: '2024-01-02' },
+              Total: { UnblendedCost: { Amount: '10.00', Unit: 'USD' } },
+              Groups: [],
+            },
+          ],
+        })
+        .resolvesOnce({
+          ResultsByTime: [
+            {
+              TimePeriod: { Start: '2024-01-01', End: '2024-01-02' },
+              Groups: [
+                {
+                  Keys: ['EC2'],
+                  Metrics: { UnblendedCost: { Amount: '7.00', Unit: 'USD' } },
+                },
+                {
+                  Keys: ['S3'],
+                  Metrics: { UnblendedCost: { Amount: '3.00', Unit: 'USD' } },
+                },
+              ],
+            },
+          ],
+        });
+
+      const service = await configureService(
+        {
+          aws: {
+            costInsights: {
+              entityGroups: [
+                {
+                  kind: 'Project',
+                  groups: [
+                    {
+                      name: 'service',
+                      key: 'SERVICE',
+                      type: 'DIMENSION',
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        undefined,
+      );
+
+      const response = await service.getProjectDailyCost({
+        project: '111111111111',
+        intervals: 'R2/P30D/2024-01-31',
+        credentials,
+      });
+
+      expect(response.groupedCosts).toBeDefined();
+      expect(response.groupedCosts!.service).toHaveLength(2);
+      expect(response.groupedCosts!.service[0].id).toBe('EC2');
+    });
+
+    it('throws on invalid interval format', async () => {
+      const service = await configureService({}, undefined);
+
+      await expect(
+        service.getProjectDailyCost({
+          project: '111111111111',
           intervals: 'invalid',
           credentials,
         }),

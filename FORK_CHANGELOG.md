@@ -24,6 +24,31 @@ Refs: FORK_CHANGES.md #N, commits <sha>..<sha>
 
 <!-- New entries go above this line. -->
 
+## 2026-09-04 — Cost Insights: per-account projects (LINKED_ACCOUNT)
+
+Implemented the upstream Cost Insights `Project` contract in the Cost
+Explorer service so frontends can offer an AWS-account selector on the
+global page:
+
+- `CostInsightsAwsService.listProjects()` — lists AWS accounts seen in
+  the last 90 days via `GetDimensionValuesCommand` (LINKED_ACCOUNT,
+  paginated), mapped to `Project { id: accountId, name: description }`.
+- `CostInsightsAwsService.getProjectDailyCost()` — daily cost for one
+  account via `GetCostAndUsageCommand` filtered by LINKED_ACCOUNT;
+  grouped costs opt-in through `entityGroups` entries with
+  `kind: 'Project'`.
+- Router: `GET /v1/projects` and `GET /v1/project/:project/:intervals`
+  (account id validated as 12 digits).
+- Requires `ce:GetDimensionValues` in addition to the existing
+  `ce:GetCostAndUsage` permission.
+- Version bump `plugins/cost-insights/backend` 0.7.0 → 0.8.0 — a
+  deliberate, scoped exception to the "never bump Lerna versions" rule:
+  the overlays release tag (`bs_1.52.0__<version>`) derives from it and
+  the previous tag is immutable. On upstream merge conflicts keep the
+  higher version.
+
+Refs: FORK_CHANGES.md #15
+
 ## 2026-05-22 — OCI build flow improvements
 
 Three related changes that came out of testing `make package-oci`

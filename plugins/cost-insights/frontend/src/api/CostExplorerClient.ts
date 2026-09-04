@@ -57,17 +57,26 @@ export class CostExplorerClient implements CostInsightsApi {
   }
 
   async getUserGroups(userId: string): Promise<Group[]> {
-    return (
+    const userGroups = (
       await this.catalogApi.getEntities({
         filter: {
           kind: 'Group',
           ['relations.hasMember']: [`user:default/${userId}`],
         },
       })
-    ).items.map(e => {
+    ).items;
+
+    const groups =
+      userGroups.length > 0
+        ? userGroups
+        : (await this.catalogApi.getEntities({ filter: { kind: 'Group' } }))
+            .items;
+
+    return groups.map(e => {
+      const spec = e.spec as any;
       return {
         id: stringifyEntityRef(e),
-        name: e.metadata.name,
+        name: e.metadata.title || spec?.profile?.displayName || e.metadata.name,
       };
     });
   }

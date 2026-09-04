@@ -93,6 +93,35 @@ export async function createRouter(
     },
   );
 
+  router.get('/v1/projects', async (request, response) => {
+    const projects = await costInsightsAwsService.listProjects({
+      credentials: await httpAuth.credentials(request),
+    });
+
+    response.status(200).json({ projects });
+  });
+
+  router.get('/v1/project/:project/:intervals', async (request, response) => {
+    const { project, intervals } = request.params;
+
+    // Projects are AWS account ids; reject anything else before it reaches
+    // the Cost Explorer filter.
+    if (!/^\d{12}$/.test(project)) {
+      response
+        .status(400)
+        .json({ error: 'project must be a 12-digit AWS account id' });
+      return;
+    }
+
+    const data = await costInsightsAwsService.getProjectDailyCost({
+      project,
+      intervals,
+      credentials: await httpAuth.credentials(request),
+    });
+
+    response.status(200).json(data);
+  });
+
   router.get('/health', (_, response) => {
     logger.info('PONG!');
     response.json({ status: 'ok' });
