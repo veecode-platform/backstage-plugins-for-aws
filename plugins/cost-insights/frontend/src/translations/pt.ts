@@ -14,6 +14,9 @@ export const costInsightsTranslationPt = createTranslationMessages({
     'globalPage.noData': 'Nenhum dado de custo disponível para o período selecionado.',
     'globalPage.fetchError': 'Erro ao buscar dados de custo: {{error}}',
 
+    'entityCard.tcoTitle': 'Custo Total de Propriedade Estimado',
+    'entityCard.tcoBreakdown': 'AWS ${{aws}}/mês + in-cluster ${{k8s}}/mês',
+    'entityCard.tcoCloudOnly': 'AWS ${{aws}}/mês',
     'entityCard.cloudTitle': 'Recursos Dedicados de Nuvem (AWS Cost Explorer)',
     'entityCard.cloudSubtitleSingle': 'Recursos dedicados faturados: {{service}}',
     'entityCard.cloudSubtitleMultiple': 'Recursos de nuvem filtrados por tags da AWS ({{tags}})',

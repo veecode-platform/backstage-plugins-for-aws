@@ -13,6 +13,9 @@ export const costInsightsMessages = {
     fetchError: 'Error fetching cost data: {{error}}',
   },
   entityCard: {
+    tcoTitle: 'Estimated Total Cost of Ownership',
+    tcoBreakdown: 'AWS ${{aws}}/mo + in-cluster ${{k8s}}/mo',
+    tcoCloudOnly: 'AWS ${{aws}}/mo',
     cloudTitle: 'Dedicated Cloud Resources (AWS Cost Explorer)',
     cloudSubtitleSingle: 'Dedicated billed resources: {{service}}',
     cloudSubtitleMultiple: 'Cloud resources filtered by AWS tags ({{tags}})',

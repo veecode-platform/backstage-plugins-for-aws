@@ -24,6 +24,14 @@ Refs: FORK_CHANGES.md #N, commits <sha>..<sha>
 
 <!-- New entries go above this line. -->
 
+## 2026-09-04 — Cost Insights frontend: missing TCO translation keys
+
+`CleanEntityCostCard.tsx` referenced `entityCard.tcoTitle` (uncasted)
+without the key existing in the translation ref, failing `yarn tsc`
+repo-wide — which blocked the overlays export CI even though this
+frontend plugin is not exported. Added `tcoTitle`, `tcoBreakdown` and
+`tcoCloudOnly` to `ref.ts` and `pt.ts`.
+
 ## 2026-09-04 — Cost Insights: per-account projects (LINKED_ACCOUNT)
 
 Implemented the upstream Cost Insights `Project` contract in the Cost
