@@ -19,6 +19,7 @@ import { costInsightsAwsServiceRef, createRouter } from './service/router';
 import { readCostInsightsAwsConfig } from './config';
 import { actionsRegistryServiceRef } from '@backstage/backend-plugin-api/alpha';
 import { createGetTrailingCostsAction } from './actions';
+import { costInsightsAwsPermissions } from '@aws/cost-insights-plugin-for-backstage-common';
 
 export const costInsightsAwsPlugin = createBackendPlugin({
   pluginId: 'cost-insights-aws',
@@ -32,6 +33,8 @@ export const costInsightsAwsPlugin = createBackendPlugin({
         cache: coreServices.cache,
         costInsightsAwsService: costInsightsAwsServiceRef,
         actionsRegistry: actionsRegistryServiceRef,
+        permissions: coreServices.permissions,
+        permissionsRegistry: coreServices.permissionsRegistry,
       },
       async init({
         logger,
@@ -41,8 +44,12 @@ export const costInsightsAwsPlugin = createBackendPlugin({
         cache,
         costInsightsAwsService,
         actionsRegistry,
+        permissions,
+        permissionsRegistry,
       }) {
         const pluginConfig = readCostInsightsAwsConfig(config);
+
+        permissionsRegistry.addPermissions(costInsightsAwsPermissions);
 
         httpRouter.use(
           await createRouter({
@@ -52,6 +59,7 @@ export const costInsightsAwsPlugin = createBackendPlugin({
             cache,
             config: pluginConfig,
             rootConfig: config,
+            permissions,
           }),
         );
         httpRouter.addAuthPolicy({

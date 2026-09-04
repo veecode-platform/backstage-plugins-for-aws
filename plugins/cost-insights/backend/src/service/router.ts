@@ -18,7 +18,11 @@ import {
   CacheService,
   HttpAuthService,
   LoggerService,
+  PermissionsService,
 } from '@backstage/backend-plugin-api';
+import { AuthorizeResult } from '@backstage/plugin-permission-common';
+import { NotAllowedError } from '@backstage/errors';
+import { costInsightsAwsReadPermission } from '@aws/cost-insights-plugin-for-backstage-common';
 import { CostInsightsCache } from '../cache';
 import { CostInsightsAwsConfig } from '../config';
 import { MiddlewareFactory } from '@backstage/backend-defaults/rootHttpRouter';
@@ -31,6 +35,7 @@ export interface RouterOptions {
   cache: CacheService;
   config: CostInsightsAwsConfig;
   rootConfig: Config;
+  permissions: PermissionsService;
 }
 
 export async function createRouter(
@@ -43,10 +48,35 @@ export async function createRouter(
     cache,
     httpAuth,
     rootConfig,
+    permissions,
   } = options;
 
   const router = Router();
   router.use(express.json());
+
+  // Gate every /v1/* route behind the cost-insights-aws.cost.read
+  // permission. This is registered as router-level middleware ahead of the
+  // cache layer below (not inlined per-handler) so a DENY is rejected
+  // *before* the cache middleware ever gets a chance to serve a cached
+  // response — a cache hit must never bypass authorization. Mounting on
+  // '/v1' also structurally excludes /health, which stays unauthenticated.
+  router.use('/v1', (request, _response, next) => {
+    httpAuth
+      .credentials(request)
+      .then(credentials =>
+        permissions.authorize(
+          [{ permission: costInsightsAwsReadPermission }],
+          { credentials },
+        ),
+      )
+      .then(([decision]) => {
+        if (decision.result === AuthorizeResult.DENY) {
+          throw new NotAllowedError();
+        }
+        next();
+      })
+      .catch(next);
+  });
 
   let cacheClient: CostInsightsCache | undefined;
   if (config.cache.enable) {

@@ -11,5 +11,11 @@
  * limitations under the License.
  */
 
-export * from './types';
-export * from './permissions';
+import { createPermission } from '@backstage/plugin-permission-common';
+
+export const costInsightsAwsReadPermission = createPermission({
+  name: 'cost-insights-aws.cost.read',
+  attributes: { action: 'read' },
+});
+
+export const costInsightsAwsPermissions = [costInsightsAwsReadPermission];
