@@ -33,17 +33,25 @@ const mockCostInsightsAwsService: jest.Mocked<CostInsightsAwsService> = {
 };
 
 // A CacheService whose `get` always resolves to a stored response, used to
-// prove that a cache hit cannot bypass the permission gate above it.
-function buildPrimedCache(body: unknown): CacheService {
+// prove that a cache hit cannot bypass the permission gate above it. The
+// underlying `get` mock is returned alongside so a test can assert it was
+// never even called.
+function buildPrimedCache(body: unknown): {
+  cache: CacheService;
+  get: jest.Mock;
+} {
+  const get = jest.fn().mockResolvedValue(JSON.stringify(body));
   const primed: Partial<CacheService> = {
-    get: jest.fn().mockResolvedValue(JSON.stringify(body)),
+    get,
     set: jest.fn().mockResolvedValue(undefined),
     delete: jest.fn().mockResolvedValue(undefined),
   };
 
-  return mockServices.cache.mock({
+  const cache = mockServices.cache.mock({
     withOptions: jest.fn().mockReturnValue(primed),
   });
+
+  return { cache, get };
 }
 
 async function buildApp(options: {
@@ -133,7 +141,7 @@ describe('createRouter', () => {
       // The cache is primed with a stored 200 body. If the permission check
       // ran after (or was bypassed by) the cache middleware, this request
       // would come back 200 with the cached body instead of 403.
-      const cache = buildPrimedCache({
+      const { cache, get: primedGet } = buildPrimedCache({
         projects: [{ id: '111111111111', name: 'dev' }],
       });
 
@@ -151,6 +159,9 @@ describe('createRouter', () => {
       expect(response.body).not.toEqual({
         projects: [{ id: '111111111111', name: 'dev' }],
       });
+      // The cache middleware sits behind the permission gate, so a DENY
+      // must short-circuit before the cache is ever read.
+      expect(primedGet).not.toHaveBeenCalled();
     });
   });
 });
