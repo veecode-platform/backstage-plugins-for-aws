@@ -164,4 +164,38 @@ describe('createRouter', () => {
       expect(primedGet).not.toHaveBeenCalled();
     });
   });
+
+  describe('GET /v1/org/:intervals', () => {
+    it('returns 403 when the cost-insights-aws.cost.read permission is denied', async () => {
+      const app = await buildApp({
+        permissions: mockServices.permissions({
+          result: AuthorizeResult.DENY,
+        }),
+      });
+
+      const response = await request(app).get('/v1/org/R2%2FP30D%2F2024-01-31');
+
+      expect(response.status).toEqual(403);
+      expect(mockCostInsightsAwsService.getOrgDailyCost).not.toHaveBeenCalled();
+    });
+
+    it('returns 200 with the org-wide cost when allowed', async () => {
+      const orgCost = { id: 'org', aggregation: [], change: { ratio: 0, amount: 0 } };
+      mockCostInsightsAwsService.getOrgDailyCost.mockResolvedValue(orgCost as any);
+
+      const app = await buildApp({
+        permissions: mockServices.permissions({
+          result: AuthorizeResult.ALLOW,
+        }),
+      });
+
+      const response = await request(app).get('/v1/org/R2%2FP30D%2F2024-01-31');
+
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual(orgCost);
+      expect(mockCostInsightsAwsService.getOrgDailyCost).toHaveBeenCalledWith(
+        expect.objectContaining({ intervals: 'R2/P30D/2024-01-31' }),
+      );
+    });
+  });
 });
