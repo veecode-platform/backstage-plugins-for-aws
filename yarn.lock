@@ -3107,6 +3107,7 @@ __metadata:
     "@backstage/plugin-auth-backend": "npm:^0.27.0"
     "@backstage/plugin-auth-backend-module-guest-provider": "npm:^0.2.16"
     "@backstage/plugin-catalog-node": "npm:^2.0.0"
+    "@backstage/plugin-permission-common": "npm:^0.9.6"
     "@red-hat-developer-hub/cli": "npm:latest"
     "@types/express": "npm:^4.17.17"
     "@types/luxon": "npm:^3"
@@ -3132,6 +3133,7 @@ __metadata:
     "@aws-sdk/client-ecs": "npm:^3.922.0"
     "@backstage/catalog-model": "npm:^1.7.6"
     "@backstage/cli": "npm:^0.35.4"
+    "@backstage/plugin-permission-common": "npm:^0.9.6"
   languageName: unknown
   linkType: soft
 
