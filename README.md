@@ -1,3 +1,14 @@
+> **This repository is retired (2026-09).** Its actively-maintained code has migrated:
+>
+> - Cost Insights backend + shared commons → [`devportal-plugins`](https://github.com/veecode-platform/devportal-plugins), workspace `aws-cost-insights`
+> - `catalog-aws-s3` module → [`devportal-plugins`](https://github.com/veecode-platform/devportal-plugins), workspace `aws-s3-catalog`
+> - GenAI dynamic-export patches → `devportal-plugin-export-overlays`, `workspaces/backstage-plugins-for-aws/patches-dormant/`
+> - ECS, CodeBuild, and CodePipeline plugins are now built directly from upstream [`awslabs/backstage-plugins-for-aws`](https://github.com/awslabs/backstage-plugins-for-aws) — no fork-specific patches remain for them
+>
+> Decision record: ADR-011 (`devportal-planning`). This repository remains clonable for reference; commit `cf408c11` stays resolvable.
+
+---
+
 # Backstage plugins for AWS
 
 Welcome to the AWS plugins for Backstage project! The goal of this project is to provide granular, composable plugins for [backstage.io](https://backstage.io) that integrate to various AWS services, as well as providing utility functions to make it easier to create custom plugins.

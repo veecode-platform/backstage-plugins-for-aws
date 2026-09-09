@@ -2,7 +2,7 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: backstage-plugins-for-aws
-  description: Fork of awslabs/backstage-plugins-for-aws. Publishes its own bundled dynamic-plugins image (backstage-aws-dynamic-plugins) to quay.io/veecode — a parallel path to the export-overlays pipeline.
+  description: "RETIRED (2026-09, ADR-011): code migrated to devportal-plugins (aws-cost-insights, aws-s3-catalog workspaces); genai patches dormant in devportal-plugin-export-overlays; ECS/CodeBuild/CodePipeline build from upstream awslabs directly. Kept for history — repo archived, still clonable."
   annotations:
     github.com/project-slug: veecode-platform/backstage-plugins-for-aws
   tags: [fork, aws, plugins]
